@@ -36,5 +36,5 @@ fi
 # --min-ax + --samples increases run time by order of magnitude
 
 time bcftools view --min-ac 2 --exclude-types indels \
-    $1 | ./vcf-split --max-calls 10000 1 10
+    $1 | ./vcf-split --max-calls 100000 1 10
 
