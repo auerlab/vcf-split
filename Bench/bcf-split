@@ -1,0 +1,5 @@
+#!/bin/sh -e
+
+bcftools +split --output Split \
+    --output-type v --include GT="0|1" \
+    freeze.8.chr22.pass_only.phased.bcf

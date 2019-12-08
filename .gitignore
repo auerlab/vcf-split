@@ -1,0 +1,5 @@
+*.o
+vcf-split
+*.bcf
+*.vcf
+.*.bak

@@ -75,7 +75,7 @@ MANPREFIX   ?= ${PREFIX}
 CC          ?= cc
 # Temporarily force -Wall and -g for early development.
 # Change this to ?= upon first release.
-CFLAGS      += -Wall -g
+CFLAGS      ?= -Wall -g
 
 # Link command:
 # Use ${FC} to link when mixing C and Fortran
