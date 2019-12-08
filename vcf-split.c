@@ -25,7 +25,8 @@
 #include <sysexits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
+#include <limits.h>     // PATH_MAX
+#include <stdint.h>     // SIZE_MAX
 #include "vcf-split.h"
 
 int     main(int argc,const char *argv[])
@@ -34,7 +35,7 @@ int     main(int argc,const char *argv[])
     char    *eos;
     size_t  first_col,
 	    last_col,
-	    max_calls = SIZE_T_MAX,
+	    max_calls = SIZE_MAX,
 	    next_arg = 1;
     
     if ( (argc != 3) && (argc != 5) )
