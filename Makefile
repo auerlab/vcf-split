@@ -73,6 +73,8 @@ MANPREFIX   ?= ${PREFIX}
 
 # Defaults that should work with GCC and Clang.
 CC          ?= cc
+# Temporarily force -Wall and -g for early development.
+# Change this to ?= upon first release.
 CFLAGS      += -Wall -g
 
 # Link command:
@@ -86,11 +88,11 @@ CPP         ?= cpp
 AR          ?= ar
 RANLIB      ?= ranlib
 
-INCLUDES    += -I${LOCALBASE}/include
+# INCLUDES    += -I${LOCALBASE}/include
 CFLAGS      += ${INCLUDES}
 CXXFLAGS    += ${INCLUDES}
 FFLAGS      += ${INCLUDES}
-LDFLAGS     += -L${LOCALBASE}/lib
+# LDFLAGS     += -L${LOCALBASE}/lib
 
 ############################################################################
 # Assume first command in PATH.  Override with full pathnames if necessary.
