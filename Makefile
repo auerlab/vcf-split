@@ -49,7 +49,7 @@ BIN     = vcf-split
 ############################################################################
 # List object files that comprise BIN.
 
-OBJS    = vcf-split.o
+OBJS    = vcf-split.o vcfio.o
 
 ############################################################################
 # Compile, link, and install options

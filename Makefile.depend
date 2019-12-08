@@ -1,0 +1,7 @@
+vcf-split.o: vcf-split.c vcf-split.h vcf-split-protos.h vcfio.h \
+  vcfio-protos.h
+	${CC} -c ${CFLAGS} vcf-split.c
+
+vcfio.o: vcfio.c vcfio.h vcfio-protos.h
+	${CC} -c ${CFLAGS} vcfio.c
+

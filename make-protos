@@ -1,0 +1,4 @@
+#!/bin/sh -e
+
+cproto vcfio.c > vcfio-protos.h
+cproto vcf-split.c > vcf-split-protos.h
