@@ -9,10 +9,12 @@
 # bcftools view --no-header --genotype het --min-ac 2 --exclude-types indels \
 #    freeze.8.chr22.pass_only.phased.bcf | fgrep -v '1|0' | fgrep -v '0|1'
 
-samples=NWD112649,NWD278543,NWD579469,NWD784564,NWD777183,NWD224967,NWD715103,NWD843745,NWD908814,NWD746546
+# From bcf-bench:
+# --min-ac + --genotype about double run time
+# --min-ax + --samples increases run time by order of magnitude
 
-time bcftools view --samples="$samples" --min-ac 2 --exclude-types indels \
-    freeze.8.chr22.pass_only.phased.bcf | ./vcf-split --max-calls 2000 1 10
+time bcftools view --min-ac 2 --exclude-types indels \
+    freeze.8.chr22.pass_only.phased.bcf | ./vcf-split --max-calls 10000 1 10
 
 # vcftools is much slower than bcftools
 # time vcftools --bcf freeze.8.chr22.pass_only.phased.bcf --stdout --recode \

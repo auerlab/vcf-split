@@ -1,0 +1,4 @@
+#!/bin/sh -e
+
+bcftools view --samples NWD112649,NWD278543 \
+    freeze.8.chr22.pass_only.phased.bcf | more

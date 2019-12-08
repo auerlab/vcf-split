@@ -1,0 +1,32 @@
+#!/bin/sh -ex
+
+lines=5000
+
+time bcftools view \
+    freeze.8.chr22.pass_only.phased.bcf | head -$lines > /dev/null
+
+samples=NWD112649,NWD278543,NWD579469,NWD784564,NWD777183,NWD224967,NWD715103,NWD843745,NWD908814,NWD746546
+time bcftools view --genotype het --exclude-types indels --samples "$samples" \
+    freeze.8.chr22.pass_only.phased.bcf | head -$lines > /dev/null
+
+time bcftools view --min-ac 2 \
+    freeze.8.chr22.pass_only.phased.bcf | head -$lines > /dev/null
+
+time bcftools view --exclude-types indels \
+    freeze.8.chr22.pass_only.phased.bcf | head -$lines > /dev/null
+
+time bcftools view --genotype het \
+    freeze.8.chr22.pass_only.phased.bcf | head -$lines > /dev/null
+
+time bcftools view --min-ac 2 --exclude-types indels \
+    freeze.8.chr22.pass_only.phased.bcf | head -$lines > /dev/null
+
+time bcftools view --min-ac 2 --genotype het \
+    freeze.8.chr22.pass_only.phased.bcf | head -$lines > /dev/null
+
+time bcftools view --exclude-types indels --genotype het \
+    freeze.8.chr22.pass_only.phased.bcf | head -$lines > /dev/null
+
+time bcftools view --min-ac 2 --exclude-types indels --genotype het \
+    freeze.8.chr22.pass_only.phased.bcf | head -$lines > /dev/null
+
