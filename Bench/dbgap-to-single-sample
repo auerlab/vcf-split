@@ -1,0 +1,53 @@
+#!/bin/sh -e
+
+##########################################################################
+#   Script description:
+#       Generate a single-sample VCF for haplohseq from DbGAP BCFs
+#       adding allelic depth from SRA CRAM files.
+#
+#   Arguments:
+#       
+#   Returns:
+#       
+#   History:
+#   Date        Name        Modification
+#   2019-12-05  Jason Bacon Begin
+##########################################################################
+
+usage()
+{
+    printf "Usage: $0 sample-id\n"
+    exit 1
+}
+
+
+##########################################################################
+#   Main
+##########################################################################
+
+if [ $# != 0 ]; then
+    usage
+fi
+
+# --threads doesn't help much
+# --genotypes doesn't help.  Does it check all samples instead of those
+# specified with --samples?
+
+set -x
+time bcftools view --no-header freeze.8.chr22.pass_only.phased.bcf | wc -l
+time bcftools view --no-header freeze.8.chr22.pass_only.phased.bcf > /dev/null
+time bcftools view --no-header --min-ac 2:minor freeze.8.chr22.pass_only.phased.bcf | wc -l
+time bcftools view --no-header --min-ac 2:minor --exclude-types indels freeze.8.chr22.pass_only.phased.bcf | wc -l
+exit
+
+# Replaced with $1 after testing
+bcftools view \
+    --no-header \
+    --samples NWD102903 \
+    --min-ac 2:minor \
+    --exclude-types indels \
+    freeze.8.chr22.pass_only.phased.bcf \
+	| tee NWD102903.vcf
+
+#        | awk '$10 == "0|1" || $10 == "1|0" { $8="."; print $0 }' \
+

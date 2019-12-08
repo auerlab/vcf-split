@@ -1,0 +1,4 @@
+#!/bin/sh -e
+
+time vcftools --bcf freeze.8.chr22.pass_only.phased.bcf --stdout --recode \
+    > /dev/null

@@ -1,0 +1,18 @@
+#!/bin/sh -ex
+
+# Varify that --genotype works
+# Filtering out calls with no het sites is probably useless with 137k
+# samples per call.
+# Does not seem to work in conjunction with --samples.
+# --samples NWDXXXX --genotype het produces lines with 1|1 or 0|0.
+# Maybe checking all samples for het instead of desired samples?
+# bcftools view --no-header --genotype het --min-ac 2 --exclude-types indels \
+#    freeze.8.chr22.pass_only.phased.bcf | fgrep -v '1|0' | fgrep -v '0|1'
+
+bcftools view --min-ac 2 --exclude-types indels \
+    freeze.8.chr22.pass_only.phased.bcf | ./vcf-split --max-calls 10000 1 10
+
+# vcftools is much slower than bcftools
+# time vcftools --bcf freeze.8.chr22.pass_only.phased.bcf --stdout --recode \
+#    | ./dbgap2hap 1 1000
+
