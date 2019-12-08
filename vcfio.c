@@ -65,7 +65,7 @@ int     read_field(const char *argv[], FILE *infile,
     else
     {
 	*p = '\0';
-	return 1;
+	return c;
     }
 }
 
