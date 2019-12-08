@@ -73,8 +73,6 @@ MANPREFIX   ?= ${PREFIX}
 
 # Defaults that should work with GCC and Clang.
 CC          ?= cc
-# Temporarily force -Wall and -g for early development.
-# Change this to ?= upon first release.
 CFLAGS      ?= -Wall -g
 
 # Link command:
