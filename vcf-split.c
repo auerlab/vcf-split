@@ -229,9 +229,9 @@ int     split_line(const char *argv[], FILE *infile, FILE *outfiles[],
 	    if ( genotype[0] != genotype[2] )
 	    {
 		printf("%zu %s:\n", c, sample_ids[c-1]);
-		printf("%s\t%s\t.\t%s\t%s\t.\t.\t%s\t%s\n",
+		printf("%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
 		    chromosome, position, ref, alt, format, genotype);
-		fprintf(outfiles[c-1], "%s\t%s\t.\t%s\t%s\t.\t.\t%s\t%s\n",
+		fprintf(outfiles[c-1], "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
 		    chromosome, position, ref, alt, format, genotype);
 	    }
 	}
