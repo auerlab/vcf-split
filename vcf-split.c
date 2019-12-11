@@ -28,6 +28,7 @@
 #include <limits.h>     // PATH_MAX
 #include <stdint.h>     // SIZE_MAX
 #include "vcf-split.h"
+#include "tsvio.h"
 #include "vcfio.h"
 
 int     main(int argc,const char *argv[])
@@ -85,7 +86,6 @@ int     main(int argc,const char *argv[])
 	exit(EX_USAGE);
     }
 
-    printf("%zu %zu %zu\n", max_calls, first_col, last_col);
     return split_vcf(argv, stdin, prefix, first_col, last_col, max_calls);
 }
 
@@ -107,7 +107,7 @@ void    usage(const char *argv[])
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-int     split_vcf(const char *argv[], FILE *infile, const char *prefix,
+int     split_vcf(const char *argv[], FILE *vcf_infile, const char *prefix,
 		    size_t first_col, size_t last_col, size_t max_calls)
 
 {
@@ -116,10 +116,10 @@ int     split_vcf(const char *argv[], FILE *infile, const char *prefix,
     
     // Input is likely to come from "bcftools view" stdout.
     // What is optimal buffering for a Unix pipe?  Benchmark several values.
-    setvbuf(infile, inbuf, _IOFBF, BUFF_SIZE);
-    skip_header(argv, infile);
-    get_sample_ids(argv, infile, sample_ids, first_col, last_col);
-    write_output_files(argv, infile, (const char **)sample_ids,
+    setvbuf(vcf_infile, inbuf, _IOFBF, BUFF_SIZE);
+    vcf_skip_header(argv, vcf_infile);
+    vcf_get_sample_ids(argv, vcf_infile, sample_ids, first_col, last_col);
+    write_output_files(argv, vcf_infile, (const char **)sample_ids,
 			prefix, first_col, last_col, max_calls);
     
     return EX_OK;
@@ -137,7 +137,7 @@ int     split_vcf(const char *argv[], FILE *infile, const char *prefix,
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-void    write_output_files(const char *argv[], FILE *infile,
+void    write_output_files(const char *argv[], FILE *vcf_infile,
 			    const char *sample_ids[], const char *prefix,
 			    size_t first_col, size_t last_col,
 			    size_t max_calls)
@@ -145,29 +145,29 @@ void    write_output_files(const char *argv[], FILE *infile,
 {
     size_t  columns = last_col - first_col + 1,
 	    c;
-    FILE    *outfiles[columns];
+    FILE    *vcf_outfiles[columns];
     char    filename[PATH_MAX + 1];
     
     // Open all output streams
     for (c = 0; c < columns; ++c)
     {
 	snprintf(filename, PATH_MAX, "%s%s.vcf", prefix, sample_ids[c]);
-	if ( (outfiles[c] = fopen(filename, "w")) == NULL )
+	if ( (vcf_outfiles[c] = fopen(filename, "w")) == NULL )
 	{
 	    fprintf(stderr, "%s: Error: Cannot create %s.\n", argv[0], filename);
 	    exit(EX_CANTCREAT);
 	}
-	skip_rest_of_line(argv, infile);
+	tsv_skip_rest_of_line(argv, vcf_infile);
     }
 
     // Temporary hack for testing.  Remove limit.
     c = 0;
-    while ( (c < max_calls) && split_line(argv, infile, outfiles, sample_ids, first_col, last_col) )
+    while ( (c < max_calls) && split_line(argv, vcf_infile, vcf_outfiles, sample_ids, first_col, last_col) )
 	++c;
     
     // Close all output streams
     for (c = 0; c < columns; ++c)
-	fclose(outfiles[c]);
+	fclose(vcf_outfiles[c]);
 }
 
 
@@ -180,73 +180,44 @@ void    write_output_files(const char *argv[], FILE *infile,
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-int     split_line(const char *argv[], FILE *infile, FILE *outfiles[],
+int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		    const char *sample_ids[], size_t first_col, size_t last_col)
 
 {
-    size_t  c;
-    char    chromosome[CHROMOSOME_NAME_MAX + 1],
-	    position[POSITION_MAX_DIGITS + 1],
-	    ref[REF_NAME_MAX + 1],
-	    alt[ALT_NAME_MAX + 1],
-	    format[FORMAT_MAX + 1],
-	    genotype[GENOTYPE_NAME_MAX + 1];
+    size_t      c;
+    vcf_call_t  vcf_call;
+    char        genotype[VCF_GENOTYPE_NAME_MAX + 1];
     
     /*
      *  Read in VCF fields
      */
     
-    // Chromosome
-    if ( read_field(argv, infile, chromosome, CHROMOSOME_NAME_MAX) )
+    if ( vcf_read_call(argv, vcf_infile, &vcf_call) )
     {
-	// Position
-	read_field(argv, infile, position, POSITION_MAX_DIGITS);
-	
-	// ID
-	skip_field(argv, infile);
-	
-	// Ref
-	read_field(argv, infile, ref, REF_NAME_MAX);
-	
-	// Alt
-	read_field(argv, infile, alt, ALT_NAME_MAX);
-	
-	// Qual
-	skip_field(argv, infile);
-	
-	// Filter
-	skip_field(argv, infile);
-	
-	// Info
-	skip_field(argv, infile);
-	
-	// Format
-	read_field(argv, infile, format, FORMAT_MAX);
-	
+	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
-	    skip_field(argv, infile);
+	    tsv_skip_field(argv, vcf_infile);
 	
 	for (; c <= last_col; ++c)
 	{
-	    read_field(argv, infile, genotype, GENOTYPE_NAME_MAX);
+	    tsv_read_field(argv, vcf_infile, genotype, VCF_GENOTYPE_NAME_MAX);
 	    if ( genotype[0] != genotype[2] )
 	    {
-		printf("%zu %s:\n", c, sample_ids[c-1]);
-		printf("%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-		    chromosome, position, ref, alt, format, genotype);
-		fprintf(outfiles[c-1], "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-		    chromosome, position, ref, alt, format, genotype);
+#if DEBUG
+		fprintf(stderr, "%zu %s:\n", c, sample_ids[c-1]);
+		fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+		    vcf_call.chromosome, vcf_call.pos_str,
+		    vcf_call.ref, vcf_call.alt,
+		    vcf_call.format, genotype);
+#endif
+		fprintf(vcf_outfiles[c-1], "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+		    vcf_call.chromosome, vcf_call.pos_str,
+		    vcf_call.ref, vcf_call.alt, 
+		    vcf_call.format, genotype);
 	    }
 	}
 	
-	skip_rest_of_line(argv, infile);
-
-#ifdef DEBUG
-	printf("%s %s %s %s %s", chromosome, position, ref, alt, format);
-	for (c = 0; c <= last_col; ++c)
-	    printf(" %s", genotype);
-	putchar('\n');
-#endif
+	tsv_skip_rest_of_line(argv, vcf_infile);
 	return 1;
     }
     else
