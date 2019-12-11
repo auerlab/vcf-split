@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/bin/sh -e
 
 ##########################################################################
 #   Script description:
@@ -10,7 +10,8 @@
 
 usage()
 {
-    printf "Usage: $0 multisample-VCF/BCF-file\n"
+    printf "Usage: $0 multisample-VCF/BCF-file prefix-for-output-files\n"
+    printf "Example: $0 freeze.8.chr1.pass_only.phased.bcf chr1.\n"
     exit 1
 }
 
@@ -19,7 +20,7 @@ usage()
 #   Main
 ##########################################################################
 
-if [ $# != 1 ]; then
+if [ $# != 2 ]; then
     usage
 fi
 
@@ -35,6 +36,8 @@ fi
 # --min-ac + --genotype about double run time
 # --min-ax + --samples increases run time by order of magnitude
 
+input="$1"
+prefix="$2"
+set -x
 time bcftools view --min-ac 2 --exclude-types indels \
-    $1 | ./vcf-split --max-calls 100000 1 10
-
+    "$input" | ./vcf-split --max-calls 100000 "$prefix" 1 10

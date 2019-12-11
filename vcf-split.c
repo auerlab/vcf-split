@@ -33,13 +33,14 @@
 int     main(int argc,const char *argv[])
 
 {
-    char    *eos;
-    size_t  first_col,
-	    last_col,
-	    max_calls = SIZE_MAX,
-	    next_arg = 1;
+    char        *eos;
+    const char  *prefix;
+    size_t      first_col,
+		last_col,
+		max_calls = SIZE_MAX,
+		next_arg = 1;
     
-    if ( (argc != 3) && (argc != 5) )
+    if ( (argc != 4) && (argc != 6) )
 	usage(argv);
     
     if ( strcmp(argv[1],"--max-calls") == 0 )
@@ -53,6 +54,8 @@ int     main(int argc,const char *argv[])
 	}
 	next_arg = 3;
     }
+    
+    prefix = argv[next_arg++];
     
     first_col = strtoul(argv[next_arg], &eos, 10);
     if ( *eos != '\0' )
@@ -83,14 +86,14 @@ int     main(int argc,const char *argv[])
     }
 
     printf("%zu %zu %zu\n", max_calls, first_col, last_col);
-    return split_vcf(argv, stdin, first_col, last_col, max_calls);
+    return split_vcf(argv, stdin, prefix, first_col, last_col, max_calls);
 }
 
 
 void    usage(const char *argv[])
 
 {
-    fprintf(stderr, "Usage: %s: [--max-calls N] first-column last-column\n", argv[0]);
+    fprintf(stderr, "Usage: %s: [--max-calls N] base-name first-column last-column\n", argv[0]);
     exit(EX_USAGE);
 }
 
@@ -104,7 +107,7 @@ void    usage(const char *argv[])
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-int     split_vcf(const char *argv[], FILE *infile,
+int     split_vcf(const char *argv[], FILE *infile, const char *prefix,
 		    size_t first_col, size_t last_col, size_t max_calls)
 
 {
@@ -117,7 +120,7 @@ int     split_vcf(const char *argv[], FILE *infile,
     skip_header(argv, infile);
     get_sample_ids(argv, infile, sample_ids, first_col, last_col);
     write_output_files(argv, infile, (const char **)sample_ids,
-			first_col, last_col, max_calls);
+			prefix, first_col, last_col, max_calls);
     
     return EX_OK;
 }
@@ -135,7 +138,7 @@ int     split_vcf(const char *argv[], FILE *infile,
  ***************************************************************************/
 
 void    write_output_files(const char *argv[], FILE *infile,
-			    const char *sample_ids[],
+			    const char *sample_ids[], const char *prefix,
 			    size_t first_col, size_t last_col,
 			    size_t max_calls)
 
@@ -148,7 +151,7 @@ void    write_output_files(const char *argv[], FILE *infile,
     // Open all output streams
     for (c = 0; c < columns; ++c)
     {
-	snprintf(filename, PATH_MAX, "%s.vcf", sample_ids[c]);
+	snprintf(filename, PATH_MAX, "%s%s.vcf", prefix, sample_ids[c]);
 	if ( (outfiles[c] = fopen(filename, "w")) == NULL )
 	{
 	    fprintf(stderr, "%s: Error: Cannot create %s.\n", argv[0], filename);
