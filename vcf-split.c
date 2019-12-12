@@ -194,6 +194,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     
     if ( vcf_read_call(argv, vcf_infile, &vcf_call) )
     {
+	//fprintf(stderr, "POS = %s\n", vcf_call.pos_str);
 	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
 	    tsv_skip_field(argv, vcf_infile);
@@ -204,13 +205,14 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	    if ( genotype[0] != genotype[2] )
 	    {
 #if DEBUG
-		fprintf(stderr, "%zu %s:\n", c, sample_ids[c-1]);
+		fprintf(stderr, "%zu %s:\n", c, sample_ids[c - first_col]);
 		fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
 		    vcf_call.chromosome, vcf_call.pos_str,
 		    vcf_call.ref, vcf_call.alt,
 		    vcf_call.format, genotype);
 #endif
-		fprintf(vcf_outfiles[c-1], "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+		fprintf(vcf_outfiles[c - first_col],
+		    "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
 		    vcf_call.chromosome, vcf_call.pos_str,
 		    vcf_call.ref, vcf_call.alt, 
 		    vcf_call.format, genotype);

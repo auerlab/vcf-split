@@ -20,7 +20,7 @@ usage()
 #   Main
 ##########################################################################
 
-if [ $# != 2 ]; then
+if [ $# != 0 ]; then
     usage
 fi
 
@@ -40,4 +40,9 @@ input="$1"
 prefix="$2"
 set -x
 time bcftools view --min-ac 2 --exclude-types indels \
-    "$input" | ./vcf-split --max-calls 100000 "$prefix" 1 10
+    ../phased/freeze.8.chr1.pass_only.phased.bcf \
+    | ./vcf-split --max-calls 100000 chr1. 11495 11495
+exit
+
+time bcftools view --min-ac 2 --exclude-types indels \
+    "$input" | ./vcf-split --max-calls 1000000 "$prefix" 1 10
