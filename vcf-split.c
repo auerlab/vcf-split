@@ -87,9 +87,9 @@ int     main(int argc,const char *argv[])
 	exit(EX_DATAERR);
     }
     
-    if ( last_col - first_col >= MAX_SAMPLES )
+    if ( last_col - first_col >= MAX_OUTFILES )
     {
-	fprintf(stderr, "%s: Maximum columns is %u\n", argv[0], MAX_SAMPLES);
+	fprintf(stderr, "%s: Maximum columns is %u\n", argv[0], MAX_OUTFILES);
 	exit(EX_USAGE);
     }
 
