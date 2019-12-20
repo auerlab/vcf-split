@@ -87,9 +87,9 @@ int     main(int argc,const char *argv[])
 	exit(EX_DATAERR);
     }
     
-    if ( last_col - first_col >= 10000 )
+    if ( last_col - first_col >= MAX_SAMPLES )
     {
-	fprintf(stderr, "%s: Maximum columns is 10,000\n", argv[0]);
+	fprintf(stderr, "%s: Maximum columns is %u\n", argv[0], MAX_SAMPLES);
 	exit(EX_USAGE);
     }
 
@@ -100,7 +100,7 @@ int     main(int argc,const char *argv[])
 void    usage(const char *argv[])
 
 {
-    fprintf(stderr, "Usage: %s: [--max-calls N] base-name first-column last-column\n", argv[0]);
+    fprintf(stderr, "Usage: %s: [--max-calls N] output-file-prefix first-column last-column\n", argv[0]);
     exit(EX_USAGE);
 }
 
