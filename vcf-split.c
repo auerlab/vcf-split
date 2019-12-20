@@ -35,7 +35,8 @@ int     main(int argc,const char *argv[])
 
 {
     char        *eos;
-    const char  *prefix;
+    const char  *sample_file,
+		*prefix;
     size_t      first_col,
 		last_col,
 		max_calls = SIZE_MAX,
@@ -54,6 +55,12 @@ int     main(int argc,const char *argv[])
 	    exit(EX_DATAERR);
 	}
 	next_arg = 3;
+    }
+    
+    if ( strcmp(argv[next_arg],"--sample-file") == 0 )
+    {
+	sample_file = argv[++next_arg];
+	++next_arg;
     }
     
     prefix = argv[next_arg++];
