@@ -34,7 +34,8 @@
 int     main(int argc,const char *argv[])
 
 {
-    char        *eos;
+    char        *eos,
+		**samples;
     const char  *sample_file,
 		*prefix;
     size_t      first_col,
@@ -42,25 +43,30 @@ int     main(int argc,const char *argv[])
 		max_calls = SIZE_MAX,
 		next_arg = 1;
     
-    if ( (argc != 4) && (argc != 6) )
+    if ( (argc != 4) && (argc != 6) && (argc != 8) )
 	usage(argv);
     
-    if ( strcmp(argv[1],"--max-calls") == 0 )
+    next_arg = 1;
+    while ( argv[next_arg][0] == '-' )
     {
-	max_calls = strtoul(argv[2], &eos, 10);
-	if ( *eos != '\0' )
+	if ( strcmp(argv[next_arg],"--max-calls") == 0 )
 	{
-	    fprintf(stderr, "%s: %s: Max calls must be a positive integer.\n",
-		    argv[0], argv[2]);
-	    exit(EX_DATAERR);
+	    max_calls = strtoul(argv[++next_arg], &eos, 10);
+	    if ( *eos != '\0' )
+	    {
+		fprintf(stderr, "%s: %s: Max calls must be a positive integer.\n",
+			argv[0], argv[next_arg]);
+		exit(EX_DATAERR);
+	    }
+	    ++next_arg;
 	}
-	next_arg = 3;
-    }
-    
-    if ( strcmp(argv[next_arg],"--sample-file") == 0 )
-    {
-	sample_file = argv[++next_arg];
-	++next_arg;
+	
+	if ( strcmp(argv[next_arg],"--sample-id-file") == 0 )
+	{
+	    sample_file = argv[++next_arg];
+	    ++next_arg;
+	    samples = read_sample_ids(sample_file);
+	}
     }
     
     prefix = argv[next_arg++];
@@ -100,7 +106,7 @@ int     main(int argc,const char *argv[])
 void    usage(const char *argv[])
 
 {
-    fprintf(stderr, "Usage: %s: [--max-calls N] output-file-prefix first-column last-column\n", argv[0]);
+    fprintf(stderr, "Usage: %s: [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
     exit(EX_USAGE);
 }
 
@@ -233,3 +239,22 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	return 0;
 }
 
+
+/***************************************************************************
+ *  Description:
+ *      Read list of sample IDs from a file.
+ *
+ *  History: 
+ *  Date        Name        Modification
+ *  2019-12-20  Jason Bacon Begin
+ ***************************************************************************/
+
+char    **read_sample_ids(const char *samples_file)
+
+{
+    char    **list;
+    size_t  c, list_size;
+    char    temp_id[SAMPLE_ID_MAX + 1];
+    
+    return list;
+}
