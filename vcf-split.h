@@ -7,4 +7,10 @@
 #define MAX_SAMPLES         1000000
 #define SAMPLE_ID_MAX       256         // Use only for temp variables
 
+typedef struct
+{
+    size_t  count;
+    char    **ids;
+}   id_list_t;
+
 #include "vcf-split-protos.h"

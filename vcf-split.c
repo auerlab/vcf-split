@@ -27,6 +27,7 @@
 #include <string.h>
 #include <limits.h>     // PATH_MAX
 #include <stdint.h>     // SIZE_MAX
+#include <ctype.h>
 #include "vcf-split.h"
 #include "tsvio.h"
 #include "vcfio.h"
@@ -34,10 +35,10 @@
 int     main(int argc,const char *argv[])
 
 {
-    char        *eos,
-		**samples;
-    const char  *sample_file,
-		*prefix;
+    char        *eos;
+    const char  *prefix,
+		*selected_samples_file;
+    id_list_t   *selected_sample_ids;
     size_t      first_col,
 		last_col,
 		max_calls = SIZE_MAX,
@@ -63,9 +64,11 @@ int     main(int argc,const char *argv[])
 	
 	if ( strcmp(argv[next_arg],"--sample-id-file") == 0 )
 	{
-	    sample_file = argv[++next_arg];
+	    selected_samples_file = argv[++next_arg];
 	    ++next_arg;
-	    samples = read_sample_ids(sample_file);
+	    selected_sample_ids =
+		read_selected_sample_ids(argv, selected_samples_file);
+	    fprintf(stderr, "%zu selected samples.\n", selected_sample_ids->count);
 	}
     }
     
@@ -99,15 +102,7 @@ int     main(int argc,const char *argv[])
 	exit(EX_USAGE);
     }
 
-    return split_vcf(argv, stdin, prefix, first_col, last_col, max_calls);
-}
-
-
-void    usage(const char *argv[])
-
-{
-    fprintf(stderr, "Usage: %s: [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
-    exit(EX_USAGE);
+    return vcf_split(argv, stdin, prefix, first_col, last_col, max_calls);
 }
 
 
@@ -120,7 +115,7 @@ void    usage(const char *argv[])
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-int     split_vcf(const char *argv[], FILE *vcf_infile, const char *prefix,
+int     vcf_split(const char *argv[], FILE *vcf_infile, const char *prefix,
 		    size_t first_col, size_t last_col, size_t max_calls)
 
 {
@@ -249,12 +244,91 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
  *  2019-12-20  Jason Bacon Begin
  ***************************************************************************/
 
-char    **read_sample_ids(const char *samples_file)
+id_list_t   *read_selected_sample_ids(const char *argv[], const char *samples_file)
 
 {
-    char    **list;
-    size_t  c, list_size;
-    char    temp_id[SAMPLE_ID_MAX + 1];
+    id_list_t   *list;
+    size_t      c;
+    char        temp_id[SAMPLE_ID_MAX + 1];
+    FILE        *fp;
+    extern int  errno;
     
+    if ( (fp = fopen(samples_file, "r")) == NULL )
+    {
+	fprintf(stderr, "%s: %s: %s\n", argv[0], samples_file,
+		strerror(errno));
+	exit(EX_NOINPUT);
+    }
+    
+    /*
+     *  With such a small file, the cleanest approach is read to count the
+     *  IDS, do one malloc(), rewind and read again.
+     */
+    
+    if ( (list = (id_list_t *)malloc(sizeof(id_list_t))) == NULL )
+    {
+	fprintf(stderr, "%s: Cannot allocate sample_ids structure.\n", argv[0]);
+	exit(EX_UNAVAILABLE);
+    }
+    
+    for (list->count = 0; read_string(fp, temp_id, SAMPLE_ID_MAX) > 0; ++list->count )
+	;
+    
+    if ( (list->ids = (char **)malloc(list->count * sizeof(char **))) == NULL )
+    {
+	fprintf(stderr, "%s: Cannot allocate sample_ids list.\n", argv[0]);
+	exit(EX_UNAVAILABLE);
+    }
+    
+    rewind(fp);
+    for (c = 0; c < list->count; ++c)
+    {
+	read_string(fp, temp_id, SAMPLE_ID_MAX);
+	if ( (list->ids[c] = strdup(temp_id)) == NULL )
+	{
+	    fprintf(stderr, "%s: Cannot allocate sample id %zu.\n", argv[0], c);
+	    exit(EX_UNAVAILABLE);
+	}
+    }
+    fclose(fp);
     return list;
+}
+
+
+/***************************************************************************
+ *  Description:
+ *      Read a whitespace-separated string.
+ *
+ *  Returns:
+ *      String length.
+ *
+ *  History: 
+ *  Date        Name        Modification
+ *  2019-12-23  Jason Bacon Begin
+ ***************************************************************************/
+
+size_t  read_string(FILE *fp, char *buff, size_t maxlen)
+
+{
+    size_t  c = 0;
+    int     ch;
+    
+    while ( isspace(ch = getc(fp)) )
+	;
+    
+    while ( (c < maxlen) && ! isspace(ch) && (ch != EOF) )
+    {
+	buff[c++] = ch;
+	ch = getc(fp);
+    }
+    buff[c] = '\0';
+    return c;
+}
+
+
+void    usage(const char *argv[])
+
+{
+    fprintf(stderr, "Usage: %s: [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
+    exit(EX_USAGE);
 }
