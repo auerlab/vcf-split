@@ -1,0 +1,4 @@
+#!/bin/sh -e
+
+awk '$3 != "Sample_Name" { print $3 }' TOPMed_SraRunTable_20190628.txt \
+    > selected-ids.txt
