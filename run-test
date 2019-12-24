@@ -47,4 +47,4 @@ set -x
 time bcftools view --min-ac 2 --exclude-types indels \
     ../phased/freeze.8.chr1.pass_only.phased.bcf \
     | ./vcf-split --sample-id-file LLS_WHIMS_NWDID_TOPMED.csv \
-    --max-calls 100000 chr1. 1 10000
+    --max-calls 100000 chr1. 1 137977

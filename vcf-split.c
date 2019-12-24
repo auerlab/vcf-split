@@ -28,6 +28,7 @@
 #include <limits.h>     // PATH_MAX
 #include <stdint.h>     // SIZE_MAX
 #include <ctype.h>
+#include <stdbool.h>
 #include "vcf-split.h"
 #include "tsvio.h"
 #include "vcfio.h"
@@ -102,7 +103,8 @@ int     main(int argc,const char *argv[])
 	exit(EX_USAGE);
     }
 
-    return vcf_split(argv, stdin, prefix, first_col, last_col, max_calls);
+    return vcf_split(argv, stdin, prefix, first_col, last_col,
+		     selected_sample_ids, max_calls);
 }
 
 
@@ -116,19 +118,23 @@ int     main(int argc,const char *argv[])
  ***************************************************************************/
 
 int     vcf_split(const char *argv[], FILE *vcf_infile, const char *prefix,
-		    size_t first_col, size_t last_col, size_t max_calls)
+		  size_t first_col, size_t last_col,
+		  id_list_t *selected_sample_ids, size_t max_calls)
 
 {
     char    inbuf[BUFF_SIZE + 1],
 	    *sample_ids[last_col - first_col + 1];
+    bool    selected[last_col - first_col + 1];
     
     // Input is likely to come from "bcftools view" stdout.
     // What is optimal buffering for a Unix pipe?  Benchmark several values.
     setvbuf(vcf_infile, inbuf, _IOFBF, BUFF_SIZE);
     vcf_skip_header(argv, vcf_infile);
     vcf_get_sample_ids(argv, vcf_infile, sample_ids, first_col, last_col);
-    write_output_files(argv, vcf_infile, (const char **)sample_ids,
-			prefix, first_col, last_col, max_calls);
+    tag_selected_columns(sample_ids, selected_sample_ids, selected,
+			 first_col, last_col);
+    write_output_files(argv, vcf_infile, (const char **)sample_ids, selected,
+		       prefix, first_col, last_col, max_calls);
     
     return EX_OK;
 }
@@ -146,7 +152,8 @@ int     vcf_split(const char *argv[], FILE *vcf_infile, const char *prefix,
  ***************************************************************************/
 
 void    write_output_files(const char *argv[], FILE *vcf_infile,
-			    const char *sample_ids[], const char *prefix,
+			    const char *sample_ids[], bool selected[],
+			    const char *prefix,
 			    size_t first_col, size_t last_col,
 			    size_t max_calls)
 
@@ -159,23 +166,28 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
     // Open all output streams
     for (c = 0; c < columns; ++c)
     {
-	snprintf(filename, PATH_MAX, "%s%s.vcf", prefix, sample_ids[c]);
-	if ( (vcf_outfiles[c] = fopen(filename, "w")) == NULL )
+	if ( selected[c] )
 	{
-	    fprintf(stderr, "%s: Error: Cannot create %s.\n", argv[0], filename);
-	    exit(EX_CANTCREAT);
+	    snprintf(filename, PATH_MAX, "%s%s.vcf", prefix, sample_ids[c]);
+	    if ( (vcf_outfiles[c] = fopen(filename, "w")) == NULL )
+	    {
+		fprintf(stderr, "%s: Error: Cannot create %s.\n", argv[0], filename);
+		exit(EX_CANTCREAT);
+	    }
+	    tsv_skip_rest_of_line(argv, vcf_infile);
 	}
-	tsv_skip_rest_of_line(argv, vcf_infile);
     }
 
     // Temporary hack for testing.  Remove limit.
     c = 0;
-    while ( (c < max_calls) && split_line(argv, vcf_infile, vcf_outfiles, sample_ids, first_col, last_col) )
+    while ( (c < max_calls) && split_line(argv, vcf_infile, vcf_outfiles,
+				sample_ids, selected, first_col, last_col) )
 	++c;
     
     // Close all output streams
     for (c = 0; c < columns; ++c)
-	fclose(vcf_outfiles[c]);
+	if ( selected[c] )
+	    fclose(vcf_outfiles[c]);
 }
 
 
@@ -189,7 +201,8 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
  ***************************************************************************/
 
 int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
-		    const char *sample_ids[], size_t first_col, size_t last_col)
+		   const char *sample_ids[], bool selected[],
+		   size_t first_col, size_t last_col)
 
 {
     size_t      c;
@@ -209,21 +222,24 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	
 	for (; c <= last_col; ++c)
 	{
-	    tsv_read_field(argv, vcf_infile, genotype, VCF_GENOTYPE_NAME_MAX);
-	    if ( genotype[0] != genotype[2] )
+	    if ( selected[c - first_col] )
 	    {
+		tsv_read_field(argv, vcf_infile, genotype, VCF_GENOTYPE_NAME_MAX);
+		if ( genotype[0] != genotype[2] )
+		{
 #if DEBUG
-		fprintf(stderr, "%zu %s:\n", c, sample_ids[c - first_col]);
-		fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-		    vcf_call.chromosome, vcf_call.pos_str,
-		    vcf_call.ref, vcf_call.alt,
-		    vcf_call.format, genotype);
+		    fprintf(stderr, "%zu %s:\n", c, sample_ids[c - first_col]);
+		    fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+			vcf_call.chromosome, vcf_call.pos_str,
+			vcf_call.ref, vcf_call.alt,
+			vcf_call.format, genotype);
 #endif
-		fprintf(vcf_outfiles[c - first_col],
-		    "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-		    vcf_call.chromosome, vcf_call.pos_str,
-		    vcf_call.ref, vcf_call.alt, 
-		    vcf_call.format, genotype);
+		    fprintf(vcf_outfiles[c - first_col],
+			"%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+			vcf_call.chromosome, vcf_call.pos_str,
+			vcf_call.ref, vcf_call.alt, 
+			vcf_call.format, genotype);
+		}
 	    }
 	}
 	
@@ -260,17 +276,17 @@ id_list_t   *read_selected_sample_ids(const char *argv[], const char *samples_fi
 	exit(EX_NOINPUT);
     }
     
-    /*
-     *  With such a small file, the cleanest approach is read to count the
-     *  IDS, do one malloc(), rewind and read again.
-     */
-    
     if ( (list = (id_list_t *)malloc(sizeof(id_list_t))) == NULL )
     {
 	fprintf(stderr, "%s: Cannot allocate sample_ids structure.\n", argv[0]);
 	exit(EX_UNAVAILABLE);
     }
     
+    /*
+     *  With such a small file, the cleanest approach is read to count the
+     *  IDS, do one malloc(), rewind and read again.
+     */
+
     for (list->count = 0; read_string(fp, temp_id, SAMPLE_ID_MAX) > 0; ++list->count )
 	;
     
@@ -291,6 +307,11 @@ id_list_t   *read_selected_sample_ids(const char *argv[], const char *samples_fi
 	}
     }
     fclose(fp);
+    
+    // List may already be sorted, so stay away from qsort, which has
+    // worst-case performance on presorted data
+    heapsort(list->ids, list->count, sizeof(char *),
+	(int (* _Nonnull)(const void *, const void *))strptrcmp);
     return list;
 }
 
@@ -331,4 +352,28 @@ void    usage(const char *argv[])
 {
     fprintf(stderr, "Usage: %s: [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
     exit(EX_USAGE);
+}
+
+
+void    tag_selected_columns(char *sample_ids[], id_list_t *selected_sample_ids,
+			     bool selected[], size_t first_col, size_t last_col)
+
+{
+    size_t  c;
+    
+    for (c = first_col; c <= last_col; ++c)
+    {
+	selected[c - first_col] =
+	    (bsearch(sample_ids + c - first_col, selected_sample_ids->ids,
+		selected_sample_ids->count, sizeof(char *),
+		(int (* _Nonnull)(const void *, const void *))strptrcmp)
+		!= NULL);
+    }
+}
+
+
+int     strptrcmp(const char **p1, const char **p2)
+
+{
+    return strcmp(*p1, *p2);
 }
