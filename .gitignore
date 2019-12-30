@@ -3,3 +3,4 @@ vcf-split
 *.bcf
 *.vcf
 .*.bak
+slurm*.out
