@@ -44,6 +44,7 @@ int     main(int argc,const char *argv[])
 		last_col,
 		max_calls = SIZE_MAX,
 		next_arg = 1;
+    flag_t      flags = 0;
     
     if ( (argc != 4) && (argc != 6) && (argc != 8) )
 	usage(argv);
@@ -70,6 +71,19 @@ int     main(int argc,const char *argv[])
 	    selected_sample_ids =
 		read_selected_sample_ids(argv, selected_samples_file);
 	    fprintf(stderr, "%zu selected samples.\n", selected_sample_ids->count);
+	}
+	
+	/*
+	 *  Adding filter flags like --genotype het to bcftools can slow
+	 *  it down significantly.  Choosing flags that maximize the speed
+	 *  of bcftools and filtering for heterozygous sites here will make
+	 *  the analysis run much faster.
+	 */
+	
+	if ( strcmp(argv[next_arg], "--het-only") == 0 )
+	{
+	    flags |= FLAG_HET;
+	    ++next_arg;
 	}
     }
     
@@ -104,7 +118,7 @@ int     main(int argc,const char *argv[])
     }
 
     return vcf_split(argv, stdin, prefix, first_col, last_col,
-		     selected_sample_ids, max_calls);
+		     selected_sample_ids, max_calls, flags);
 }
 
 
@@ -119,7 +133,8 @@ int     main(int argc,const char *argv[])
 
 int     vcf_split(const char *argv[], FILE *vcf_infile, const char *prefix,
 		  size_t first_col, size_t last_col,
-		  id_list_t *selected_sample_ids, size_t max_calls)
+		  id_list_t *selected_sample_ids, size_t max_calls,
+		  flag_t flags)
 
 {
     char    inbuf[BUFF_SIZE + 1],
@@ -134,7 +149,7 @@ int     vcf_split(const char *argv[], FILE *vcf_infile, const char *prefix,
     tag_selected_columns(sample_ids, selected_sample_ids, selected,
 			 first_col, last_col);
     write_output_files(argv, vcf_infile, (const char **)sample_ids, selected,
-		       prefix, first_col, last_col, max_calls);
+		       prefix, first_col, last_col, max_calls, flags);
     
     return EX_OK;
 }
@@ -155,7 +170,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 			    const char *sample_ids[], bool selected[],
 			    const char *prefix,
 			    size_t first_col, size_t last_col,
-			    size_t max_calls)
+			    size_t max_calls, flag_t flags)
 
 {
     size_t  columns = last_col - first_col + 1,
@@ -181,7 +196,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
     // Temporary hack for testing.  Remove limit.
     c = 0;
     while ( (c < max_calls) && split_line(argv, vcf_infile, vcf_outfiles,
-				sample_ids, selected, first_col, last_col) )
+	    sample_ids, selected, first_col, last_col, flags) )
 	++c;
     
     // Close all output streams
@@ -202,7 +217,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 
 int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		   const char *sample_ids[], bool selected[],
-		   size_t first_col, size_t last_col)
+		   size_t first_col, size_t last_col, flag_t flags)
 
 {
     size_t      c;
@@ -225,7 +240,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	    if ( selected[c - first_col] )
 	    {
 		tsv_read_field(argv, vcf_infile, genotype, VCF_GENOTYPE_NAME_MAX);
-		if ( genotype[0] != genotype[2] )
+		if ( ! (flags & FLAG_HET) || (genotype[0] != genotype[2]) )
 		{
 #if DEBUG
 		    fprintf(stderr, "%zu %s:\n", c, sample_ids[c - first_col]);

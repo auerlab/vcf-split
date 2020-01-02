@@ -41,5 +41,5 @@
 
 bcftools view --min-ac 2 --exclude-types indels \
     ../phased/freeze.8.chr1.pass_only.phased.bcf \
-    | ./vcf-split --sample-id-file LLS_WHIMS_NWDID_TOPMED.csv \
+    | ./vcf-split --het-only --sample-id-file LLS_WHIMS_NWDID_TOPMED.csv \
     chr1. 1 137977

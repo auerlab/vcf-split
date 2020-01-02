@@ -13,4 +13,8 @@ typedef struct
     char    **ids;
 }   id_list_t;
 
+typedef unsigned char   flag_t;
+
+#define FLAG_HET    0x01
+
 #include "vcf-split-protos.h"
