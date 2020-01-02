@@ -1,2 +1,4 @@
 
 Error out if input files are not sorted
+
+Output VCF header
