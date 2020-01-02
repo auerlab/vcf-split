@@ -46,7 +46,7 @@ int     main(int argc,const char *argv[])
 		next_arg = 1;
     flag_t      flags = 0;
     
-    if ( (argc != 4) && (argc != 6) && (argc != 8) )
+    if ( (argc != 5) && (argc != 7) && (argc != 9) )
 	usage(argv);
     
     next_arg = 1;
