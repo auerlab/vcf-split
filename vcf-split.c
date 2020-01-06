@@ -29,6 +29,7 @@
 #include <stdint.h>     // SIZE_MAX
 #include <ctype.h>
 #include <stdbool.h>
+#include <errno.h>
 #include "vcf-split.h"
 #include "tsvio.h"
 #include "vcfio.h"
@@ -282,7 +283,6 @@ id_list_t   *read_selected_sample_ids(const char *argv[], const char *samples_fi
     size_t      c;
     char        temp_id[SAMPLE_ID_MAX + 1];
     FILE        *fp;
-    extern int  errno;
     
     if ( (fp = fopen(samples_file, "r")) == NULL )
     {
@@ -325,8 +325,10 @@ id_list_t   *read_selected_sample_ids(const char *argv[], const char *samples_fi
     
     // List may already be sorted, so stay away from qsort, which has
     // worst-case performance on presorted data
-    heapsort(list->ids, list->count, sizeof(char *),
-	(int (* _Nonnull)(const void *, const void *))strptrcmp);
+    // List should not be huge, so minor issue here
+    // heapsort() is not portable, however
+    qsort(list->ids, list->count, sizeof(char *),
+	(int (*)(const void *, const void *))strptrcmp);
     return list;
 }
 
@@ -381,7 +383,7 @@ void    tag_selected_columns(char *sample_ids[], id_list_t *selected_sample_ids,
 	selected[c - first_col] =
 	    (bsearch(sample_ids + c - first_col, selected_sample_ids->ids,
 		selected_sample_ids->count, sizeof(char *),
-		(int (* _Nonnull)(const void *, const void *))strptrcmp)
+		(int (*)(const void *, const void *))strptrcmp)
 		!= NULL);
     }
 }

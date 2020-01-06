@@ -131,3 +131,17 @@ int     vcf_read_call(const char *argv[],
     else
 	return 0;
 }
+
+
+size_t  strlcpy(char *dest, const char *src, size_t len)
+
+{
+    char   *save_dest, *end;
+
+    save_dest = dest;
+    end = (char *)src + len - 1;
+    while ((*src != '\0') && (src < end))
+	*dest++ = *src++;
+    *dest = '\0';
+    return dest - save_dest;
+}
