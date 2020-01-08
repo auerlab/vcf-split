@@ -1,30 +1,30 @@
 # vcf-split
 Split combined-sample VCF stream into single-sample VCF files.
 
-Traditional bioinformatics tools need to reread the multi-sample VCF for
-each extracted sample, which becomes a major bottleneck for large VCFs,
-especially when they are compressed.  For example, using bcftools to simply
-decode a single-chromosome BCF file from one of our SRA projects and dumping
-the VCF output to /dev/null takes nearly 11 hours:
+Traditional methods for splitting a multi-sample VCF stream into single-sample
+files involve a loop or parallel job that rereads the multi-sample input for
+every sample.  This can
+become a major bottleneck where there are many samples and/or the input
+is compressed.  For example, using "bcftools view" with optimal filtering
+options to merely decode one human chromosome BCF with
+137,977 samples and pipe the VCF output through "wc" took 12 hours on a
+fast server using 2 cores.  To split it into 137,977 single-sample VCFs
+would therefore require about 137,977 * 12 * 2 = ~3 million core-hours.
+This translates to 171 years on a single server or 125 days using 1000 cores
+on an HPC cluster.
 
-time bcftools view --no-header freeze.8.chr22.pass_only.phased.bcf > /dev/null
+vcf-split solves this problem by writing a large number of single-sample VCFs
+simultaneously during a single read of the multi-sample input.  The number
+of parallel output files is limited only by the open file limit of your
+system, which is typically at least in the tens of thousands on a modern
+Unix workstation or server.
 
-    39486.70 real     39456.34 user        28.55 sys
+vcf-split is written entirely in C and attempts to optimize CPU, memory,
+and disk access.  It does not inhale large amounts of data into RAM, so memory
+use is trivial and it runs mostly from cache, making it very fast.
 
-Repeating this process for the 100,000+ samples in this file would turn it
-into a massive and senseless HPC job, wasting cluster resources that can be
-put to better use.
-
-vcf-split can write many single-sample VCFs at the same time. It is limited
-only by the number of open files supported by your operating system, which
-varies by operating system, file system, and hardware specs, but is typically
-at least in the tens of thousands.
-
-vcf-split does not inhale data into memory, so memory use is trivial and
-it works mostly with cache memory, making it very fast.
-
-Hence, the sample BCF above can be split in about 30 hours on a decent
-workstation.
+The example BCF file mentioned above can be split in a few days on a single
+server using two cores, with three runs of about 45,000 output files each.
 
 vcf-split is intended to build cleanly in any POSIX environment.  Please
 don't hesitate to open an issue if you encounter problems on any
