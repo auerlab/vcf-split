@@ -10,15 +10,40 @@ vcf-split \- Efficiently split a multi-sample VCF stream into single-sample file
 .PP
 .nf 
 .na 
-vcf-split: [--max-calls N] [--sample-id-file file] 
-    output-file-prefix first-column last-column
+vcf-split [--het-only] [--max-calls N] [--sample-id-file file] 
+    output-file-prefix first-column last-column < file.vcf
+
+bcftools view file.bcf | vcf-split ...
 .ad
 .fi
 
 .SH OPTIONS
 .TP
-\fB\-\-\flagfR[=\fIparameter\fR]
-description
+\fB\-\-het\-only
+Output only heterozygous sites.  bcftools --genotype het slows down the
+BCF decoding process and vcf-split uses far less CPU, so allowing vcf-split
+to select heterzygous sites increases pipeline performance considerably.
+
+.TP
+\fB\-\-max\-calls N
+Limit the number of VCF calls written for testing purposes
+
+.TP
+\fB\-\-sample\-id\-file filename
+File containing a whitespace-separated list of sample IDS
+
+.TP
+\fB\-\-output\-file\-prefix string
+Common prefix for all single-sample VCF output files
+
+.TP
+.B output-file-prefix
+Common filename prefix for all single-sample output files
+
+.TP
+.B first-column last-column
+are 1-based column numbers limiting the number of samples
+for each run.  E.g. for a 100,000 sample VCF stream
 
 \" Optional sections
 .SH "PURPOSE"
@@ -61,4 +86,5 @@ Please report bugs to the author and send patches in unified diff format.
 .nf
 .na
 Jason W. Bacon
-UW Milwaukee Zilber School of Public Health
+Paul Auer Lab
+UW -- Milwaukee Zilber School of Public Health
