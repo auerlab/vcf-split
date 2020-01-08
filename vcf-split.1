@@ -89,9 +89,8 @@ ad2vcf, haplohseq
 vcf-split < input.vcf --het-only single-sample- 1 100
 
 bcftools view --min-ac 2 --exclude-types indels \\
-    ../phased/freeze.8.chr1.pass_only.phased.bcf \\
-    | vcf-split --het-only \\
-    --sample-id-file LLS_WHIMS_NWDID_TOPMED.csv chr01. 1 137977
+    freeze.8.chr1.pass_only.phased.bcf \\
+    | vcf-split --het-only --sample-id-file samples.csv chr01. 1 137977
 
 .SH BUGS
 Please report bugs to the author and send patches in unified diff format.
