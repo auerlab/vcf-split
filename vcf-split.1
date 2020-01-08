@@ -69,11 +69,12 @@ of parallel output files is limited only by the open file limit of your
 system, which is typically at least in the tens of thousands on a modern
 Unix workstation or server.
 
-.B vcf-split does not inhale large amounts of data into RAM, so memory
+.B vcf-split is written entirely in C and attempts to optimize CPU, memory,
+and disk access.  It does not inhale large amounts of data into RAM, so memory
 use is trivial and it runs mostly from cache, making it very fast.
 
-The example BCF file mentioned above can be split in about 33 hours using
-three runs of about 45,000 output files each.
+The example BCF file mentioned above can be split in a few days on a single
+server using two cores, with three runs of about 45,000 output files each.
 
 .SH "SEE ALSO"
 ad2vcf, haplohseq
