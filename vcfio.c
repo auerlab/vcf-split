@@ -133,6 +133,7 @@ int     vcf_read_call(const char *argv[],
 }
 
 
+#ifdef __linux__
 size_t  strlcpy(char *dest, const char *src, size_t len)
 
 {
@@ -145,3 +146,4 @@ size_t  strlcpy(char *dest, const char *src, size_t len)
     *dest = '\0';
     return dest - save_dest;
 }
+#endif

@@ -17,4 +17,8 @@ typedef struct
     size_t  pos;
 }   vcf_call_t;
 
+#ifdef __linux__
+size_t strlcpy(char *dest, const char *src, size_t len);
+#endif
+
 #include "vcfio-protos.h"
