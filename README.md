@@ -8,6 +8,7 @@ decode a single-chromosome BCF file from one of our SRA projects and dumping
 the VCF output to /dev/null takes nearly 11 hours:
 
 time bcftools view --no-header freeze.8.chr22.pass_only.phased.bcf > /dev/null
+
     39486.70 real     39456.34 user        28.55 sys
 
 Repeating this process for the 100,000+ samples in this file would turn it
