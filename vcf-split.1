@@ -1,0 +1,64 @@
+.TH VCF-SPLIT 1
+.SH NAME    \" Section header
+.PP
+ 
+vcf-split \- Efficiently split a multi-sample VCF stream into single-sample files
+
+\" Convention:
+\" Underline anything that is typed verbatim - commands, etc.
+.SH SYNOPSIS
+.PP
+.nf 
+.na 
+vcf-split: [--max-calls N] [--sample-id-file file] 
+    output-file-prefix first-column last-column
+.ad
+.fi
+
+.SH OPTIONS
+.TP
+\fB\-\-\flagfR[=\fIparameter\fR]
+description
+
+\" Optional sections
+.SH "PURPOSE"
+
+.B vcf-split
+efficiently splits a multi-sample VCF stream into single-sample VCF files.
+
+.SH "DESCRIPTION"
+
+Previous methods for splitting a multi-sample VCF stream into single-sample
+files involved rereading the multi-sample input for every sample.  This can
+become a major bottleneck where there are many samples and/or the input
+is compressed.  For example, merely decoding one human chromosome BCF with
+137,000 samples and dumping the VCF output to /dev/null took 11 hours on a
+fast server using 2 cores.  To split it into 137,000 single-sample VCFs
+would therefore require at least 137,000 * 11 * 2 = ~3 million core-hours
+on an HPC cluster.
+
+.B vcf-split
+solves this problem by writing a large number of single-sample VCFs
+simultaneously during a single read of the multi-sample input.  The number
+of parallel output files is limited only by the open file limit of your
+system, which is typically at least in the tens of thousands on a modern
+Unix workstation or server.
+
+.B vcf-split does not inhale large amounts of data into RAM, so memory
+use is trivial and it runs mostly from cache, making it very fast.
+
+The example BCF file mentioned above can be split in about 33 hours using
+three runs of about 45,000 output files each.
+
+.SH "SEE ALSO"
+ad2vcf, haplohseq
+
+.SH BUGS
+Please report bugs to the author and send patches in unified diff format.
+(man diff for more information)
+
+.SH AUTHOR
+.nf
+.na
+Jason W. Bacon
+UW Milwaukee Zilber School of Public Health

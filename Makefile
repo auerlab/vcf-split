@@ -44,7 +44,7 @@
 # Installed targets
 
 BIN     = vcf-split
-# MAN     = program.1
+MAN     = vcf-split.1
 
 ############################################################################
 # List object files that comprise BIN.
