@@ -61,6 +61,7 @@ void    vcf_get_sample_ids(const char *argv[], FILE *infile,
     for (; (c <= last_col) &&
 	   tsv_read_field(argv, infile, temp_id, VCF_ID_MAX_LEN) != 0; ++c)
     {
+	tsv_read_field(argv, infile, temp_id, VCF_ID_MAX_LEN);
 	sample_ids[c - first_col] = strdup(temp_id);
 	// printf("'%s'\n", sample_ids[c]);
     }
@@ -130,6 +131,74 @@ int     vcf_read_call(const char *argv[],
     }
     else
 	return 0;
+}
+
+
+/***************************************************************************
+ *  Description:
+ *      Read a single-sample VCF call including genotype.
+ *
+ *  History: 
+ *  Date        Name        Modification
+ *  2019-12-11  Jason Bacon Begin
+ ***************************************************************************/
+
+int     vcf_read_ss_call(const char *argv[],
+		      FILE *vcf_stream, vcf_call_t *vcf_call)
+
+{
+    if ( vcf_read_call(argv, vcf_stream, vcf_call) &&
+	 tsv_read_field(argv, vcf_stream,
+			vcf_call->genotype, VCF_GENOTYPE_NAME_MAX) )
+	return 1;
+    else
+	return 0;
+}
+
+
+/***************************************************************************
+ *  Description:
+ *      Read in all consecutive calls with the same position.
+ *
+ *  Returns:
+ *      Array of calls and number of calls.
+ *
+ *  History: 
+ *  Date        Name        Modification
+ *  2019-12-11  Jason Bacon Begin
+ ***************************************************************************/
+
+size_t  vcf_read_duplicate_calls(const char *argv[], FILE *vcf_stream,
+				 vcf_duplicate_call_t *vcf_duplicate_calls)
+
+{
+    // Cache the next VCF call after the last one returned
+    static vcf_call_t   vcf_call;
+    static size_t       buffered_calls = 0; // 0 or 1
+    size_t              c;
+    
+    // Prime cache with the first call
+    if ( buffered_calls == 0 )
+	if ( (buffered_calls = vcf_read_ss_call(argv, vcf_stream, &vcf_call)) == 0 )
+	    return 0;
+    
+    /*
+     *  Read all VCF calls with the same position.  The first one with a
+     *  different position is not added to vcf_duplicate_calls and is left in
+     *  the static vcf_call for the next invocation of this function.
+     */
+    c = 0;
+    do
+    {
+	vcf_duplicate_calls->vcf_call[c++] = vcf_call;
+    }   while ( (buffered_calls =
+		    vcf_read_ss_call(argv, vcf_stream, &vcf_call)) &&
+		(vcf_call.pos == vcf_duplicate_calls->vcf_call[c-1].pos) &&
+		(strcmp(vcf_call.chromosome,
+		vcf_duplicate_calls->vcf_call[c-1].chromosome) == 0) );
+
+    // Return the number of calls with the same position
+    return vcf_duplicate_calls->count = c;
 }
 
 
