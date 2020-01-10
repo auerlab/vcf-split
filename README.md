@@ -1,6 +1,9 @@
 # vcf-split
 Split combined-sample VCF stream into single-sample VCF files.
 
+It is currently suitable for generating inputs for haplohseq, but the
+intention is to generalize it in the future.
+
 Traditional methods for splitting a multi-sample VCF stream into single-sample
 files involve a loop or parallel job that rereads the multi-sample input for
 every sample.  This can
