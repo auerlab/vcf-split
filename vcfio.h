@@ -25,7 +25,7 @@ typedef struct
 }   vcf_duplicate_call_t;
 
 #ifdef __linux__
-size_t strlcpy(char *dest, const char *src, size_t len);
+size_t strlcpy(char *restrict dest, const char *restrict src, size_t len);
 #endif
 
 #include "vcfio-protos.h"

@@ -229,7 +229,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
      *  Read in VCF fields
      */
     
-    if ( vcf_read_call(argv, vcf_infile, &vcf_call) )
+    if ( vcf_read_static_fields(argv, vcf_infile, &vcf_call) )
     {
 	//fprintf(stderr, "POS = %s\n", vcf_call.pos_str);
 	// Skip columns before first_col
