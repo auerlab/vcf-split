@@ -187,7 +187,8 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	    snprintf(filename, PATH_MAX, "%s%s.vcf", prefix, sample_ids[c]);
 	    if ( (vcf_outfiles[c] = fopen(filename, "w")) == NULL )
 	    {
-		fprintf(stderr, "%s: Error: Cannot create %s.\n", argv[0], filename);
+		fprintf(stderr, "%s: Error: Cannot create %s.\n",
+			argv[0], filename);
 		exit(EX_CANTCREAT);
 	    }
 	    tsv_skip_rest_of_line(argv, vcf_infile);
@@ -238,10 +239,10 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	
 	for (; c <= last_col; ++c)
 	{
+	    tsv_read_field(argv, vcf_infile, genotype, VCF_GENOTYPE_NAME_MAX);
 	    if ( selected[c - first_col] )
 	    {
-		tsv_read_field(argv, vcf_infile, genotype, VCF_GENOTYPE_NAME_MAX);
-		if ( ! (flags & FLAG_HET) || (genotype[0] != genotype[2]) )
+		if ( !(flags & FLAG_HET) || (genotype[0] != genotype[2]) )
 		{
 #if DEBUG
 		    fprintf(stderr, "%zu %s:\n", c, sample_ids[c - first_col]);
