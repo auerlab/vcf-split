@@ -38,7 +38,7 @@ int     main(int argc,const char *argv[])
 
 {
     char        *eos;
-    const char  *prefix,
+    const char  *outfile_prefix,
 		*selected_samples_file;
     id_list_t   *selected_sample_ids;
     size_t      first_col,
@@ -86,9 +86,15 @@ int     main(int argc,const char *argv[])
 	    flags |= FLAG_HET;
 	    ++next_arg;
 	}
+
+	if ( strcmp(argv[next_arg], "--xz") == 0 )
+	{
+	    flags |= FLAG_XZ;
+	    ++next_arg;
+	}
     }
     
-    prefix = argv[next_arg++];
+    outfile_prefix = argv[next_arg++];
     
     first_col = strtoul(argv[next_arg], &eos, 10);
     if ( *eos != '\0' )
@@ -118,7 +124,7 @@ int     main(int argc,const char *argv[])
 	exit(EX_USAGE);
     }
 
-    return vcf_split(argv, stdin, prefix, first_col, last_col,
+    return vcf_split(argv, stdin, outfile_prefix, first_col, last_col,
 		     selected_sample_ids, max_calls, flags);
 }
 
@@ -132,7 +138,7 @@ int     main(int argc,const char *argv[])
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-int     vcf_split(const char *argv[], FILE *vcf_infile, const char *prefix,
+int     vcf_split(const char *argv[], FILE *vcf_infile, const char *outfile_prefix,
 		  size_t first_col, size_t last_col,
 		  id_list_t *selected_sample_ids, size_t max_calls,
 		  flag_t flags)
@@ -150,7 +156,7 @@ int     vcf_split(const char *argv[], FILE *vcf_infile, const char *prefix,
     tag_selected_columns(sample_ids, selected_sample_ids, selected,
 			 first_col, last_col);
     write_output_files(argv, vcf_infile, (const char **)sample_ids, selected,
-		       prefix, first_col, last_col, max_calls, flags);
+		       outfile_prefix, first_col, last_col, max_calls, flags);
     
     return EX_OK;
 }
@@ -169,7 +175,7 @@ int     vcf_split(const char *argv[], FILE *vcf_infile, const char *prefix,
 
 void    write_output_files(const char *argv[], FILE *vcf_infile,
 			    const char *sample_ids[], bool selected[],
-			    const char *prefix,
+			    const char *outfile_prefix,
 			    size_t first_col, size_t last_col,
 			    size_t max_calls, flag_t flags)
 
@@ -177,15 +183,24 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
     size_t  columns = last_col - first_col + 1,
 	    c;
     FILE    *vcf_outfiles[columns];
-    char    filename[PATH_MAX + 1];
+    char    filename[PATH_MAX + 1],
+	    cmd[CMD_MAX + 1];
     
     // Open all output streams
     for (c = 0; c < columns; ++c)
     {
 	if ( selected[c] )
 	{
-	    snprintf(filename, PATH_MAX, "%s%s.vcf", prefix, sample_ids[c]);
-	    if ( (vcf_outfiles[c] = fopen(filename, "w")) == NULL )
+	    snprintf(filename, PATH_MAX, "%s%s.vcf",
+		     outfile_prefix, sample_ids[c]);
+	    if ( flags & FLAG_XZ )
+	    {
+		snprintf(cmd, CMD_MAX, "xz -c > %s.xz",filename);
+		vcf_outfiles[c] = popen(cmd, "w");
+	    }
+	    else
+		vcf_outfiles[c] = fopen(filename, "w");
+	    if ( vcf_outfiles[c] == NULL )
 	    {
 		fprintf(stderr, "%s: Error: Cannot create %s.\n",
 			argv[0], filename);
@@ -204,7 +219,12 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
     // Close all output streams
     for (c = 0; c < columns; ++c)
 	if ( selected[c] )
-	    fclose(vcf_outfiles[c]);
+	{
+	    if ( flags & FLAG_XZ )
+		pclose(vcf_outfiles[c]);
+	    else
+		fclose(vcf_outfiles[c]);
+	}
 }
 
 
