@@ -45,5 +45,5 @@ chromosome=$(printf "%02d" $SLURM_ARRAY_TASK_ID)
 
 bcftools view --min-ac 2 --exclude-types indels \
     ../phased/freeze.8.chr$SLURM_ARRAY_TASK_ID.pass_only.phased.bcf \
-    | ./vcf-split --het-only --sample-id-file 10-samples.txt \
+    | ./vcf-split --het-only --xz --sample-id-file 10-samples.txt \
     chr$chromosome. 1 137977
