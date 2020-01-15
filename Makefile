@@ -49,14 +49,14 @@ MAN     = vcf-split.1
 ############################################################################
 # List object files that comprise BIN.
 
-OBJS    = vcf-split.o vcfio.o tsvio.o
+OBJS    = vcf-split.o
 
 ############################################################################
 # Compile, link, and install options
 
 # Where to find local libraries and headers.  For MacPorts, override
 # with LOCALBASE=/opt/local.
-LOCALBASE   ?= /usr/local
+LOCALBASE   ?= ../local
 
 # Install in /usr/local, unless defined by the parent Makefile, the
 # environment, or a command line option such as PREFIX=/opt/local.
@@ -86,11 +86,9 @@ CPP         ?= cpp
 AR          ?= ar
 RANLIB      ?= ranlib
 
-# INCLUDES    += -I${LOCALBASE}/include
+INCLUDES    += -I${LOCALBASE}/include
 CFLAGS      += ${INCLUDES}
-CXXFLAGS    += ${INCLUDES}
-FFLAGS      += ${INCLUDES}
-# LDFLAGS     += -L${LOCALBASE}/lib
+LDFLAGS     += -L${LOCALBASE}/lib -lvcfio
 
 ############################################################################
 # Assume first command in PATH.  Override with full pathnames if necessary.

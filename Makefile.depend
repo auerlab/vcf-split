@@ -1,10 +1,5 @@
-tsvio.o: tsvio.c tsvio.h tsvio-protos.h
-	${CC} -c ${CFLAGS} tsvio.c
-
-vcfio.o: vcfio.c tsvio.h tsvio-protos.h vcfio.h vcfio-protos.h
-	${CC} -c ${CFLAGS} vcfio.c
-
-vcf-split.o: vcf-split.c vcf-split.h vcf-split-protos.h tsvio.h \
- tsvio-protos.h vcfio.h vcfio-protos.h
+vcf-split.o: vcf-split.c vcf-split.h vcf-split-protos.h \
+  ../local/include/tsvio.h ../local/include/tsvio-protos.h \
+  ../local/include/vcfio.h ../local/include/vcfio-protos.h
 	${CC} -c ${CFLAGS} vcf-split.c
 
