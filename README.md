@@ -36,3 +36,17 @@ Unix-like system.
 Primary development is done on FreeBSD, but the code is frequently tested on
 CentOS, Mac OS X, and NetBSD as well.  MS Windows is not supported, unless
 using a POSIX environment such as Cygwin or Windows Subsystem for Linux.
+
+Building and installing:
+
+Set LOCALBASE to the prefix of lib/libvcfio.a.  Default is ../local.
+(See Makefile).
+
+Set PREFIX to the prefix where you would like to install.  Default is
+$LOCALBASE.
+
+Then simple run
+
+```sh
+make install
+```
