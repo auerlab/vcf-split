@@ -47,7 +47,7 @@ Set LOCALBASE to the prefix of lib/libvcfio.a.  Default is ../local.
 Set PREFIX to the prefix where you would like to install.  Default is
 $LOCALBASE.
 
-Then simple run
+Then simply run
 
 ```sh
 make install
