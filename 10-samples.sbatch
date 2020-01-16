@@ -39,6 +39,7 @@
 
 #SBATCH --array=1-22
 #SBATCH --ntasks=2
+#SBATCH --exclude=compute-[001-008,012]
 
 # Make output file names sort lexically by chromosome number
 chromosome=$(printf "%02d" $SLURM_ARRAY_TASK_ID)
