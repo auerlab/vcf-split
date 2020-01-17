@@ -388,7 +388,7 @@ size_t  read_string(FILE *fp, char *buff, size_t maxlen)
 void    usage(const char *argv[])
 
 {
-    fprintf(stderr, "Usage: %s: [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
+    fprintf(stderr, "Usage: %s: [--xz] [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
     exit(EX_USAGE);
 }
 
