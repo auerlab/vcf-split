@@ -244,7 +244,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 {
     size_t      c;
     vcf_call_t  vcf_call;
-    char        genotype[VCF_GENOTYPE_NAME_MAX + 1];
+    char        genotype[VCF_SAMPLE_MAX_CHARS + 1];
     
     /*
      *  Read in VCF fields
@@ -259,7 +259,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	
 	for (; c <= last_col; ++c)
 	{
-	    tsv_read_field(argv, vcf_infile, genotype, VCF_GENOTYPE_NAME_MAX);
+	    tsv_read_field(argv, vcf_infile, genotype, VCF_SAMPLE_MAX_CHARS);
 	    if ( selected[c - first_col] )
 	    {
 		if ( !(flags & FLAG_HET) || (genotype[0] != genotype[2]) )
@@ -271,6 +271,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 			vcf_call.ref, vcf_call.alt,
 			vcf_call.format, genotype);
 #endif
+		    // FIXME: Use vcf_write_ss_call()
 		    fprintf(vcf_outfiles[c - first_col],
 			"%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
 			vcf_call.chromosome, vcf_call.pos_str,
