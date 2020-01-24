@@ -193,9 +193,10 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	{
 	    snprintf(filename, PATH_MAX, "%s%s.vcf",
 		     outfile_prefix, sample_ids[c]);
+	    // FIXME: Creates too many processes, one for each sample
 	    if ( flags & FLAG_XZ )
 	    {
-		snprintf(cmd, CMD_MAX, "xz -c > %s.xz",filename);
+		snprintf(cmd, CMD_MAX, "xz --stdout > %s.xz",filename);
 		vcf_outfiles[c] = popen(cmd, "w");
 	    }
 	    else
