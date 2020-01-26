@@ -87,11 +87,13 @@ int     main(int argc,const char *argv[])
 	    ++next_arg;
 	}
 
+	/* Find a way to do this without thousands of xz processes
 	if ( strcmp(argv[next_arg], "--xz") == 0 )
 	{
 	    flags |= FLAG_XZ;
 	    ++next_arg;
 	}
+	*/
     }
     
     outfile_prefix = argv[next_arg++];
@@ -193,12 +195,14 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	{
 	    snprintf(filename, PATH_MAX, "%s%s.vcf",
 		     outfile_prefix, sample_ids[c]);
+	    /* Find a way to do this without thousands of xz processes
 	    if ( flags & FLAG_XZ )
 	    {
 		snprintf(cmd, CMD_MAX, "xz -c > %s.xz",filename);
 		vcf_outfiles[c] = popen(cmd, "w");
 	    }
 	    else
+	    */
 		vcf_outfiles[c] = fopen(filename, "w");
 	    if ( vcf_outfiles[c] == NULL )
 	    {
@@ -220,9 +224,11 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
     for (c = 0; c < columns; ++c)
 	if ( selected[c] )
 	{
+	    /*
 	    if ( flags & FLAG_XZ )
 		pclose(vcf_outfiles[c]);
 	    else
+	    */
 		fclose(vcf_outfiles[c]);
 	}
 }
@@ -389,7 +395,9 @@ size_t  read_string(FILE *fp, char *buff, size_t maxlen)
 void    usage(const char *argv[])
 
 {
-    fprintf(stderr, "Usage: %s: [--xz] [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
+    // Find a way to do this without thousands of xz processes
+    // fprintf(stderr, "Usage: %s: [--xz] [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
+    fprintf(stderr, "Usage: %s: [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
     exit(EX_USAGE);
 }
 
