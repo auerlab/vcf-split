@@ -30,6 +30,8 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include "vcf-split.h"
 #include "tsvio.h"
 #include "vcfio.h"
@@ -140,7 +142,8 @@ int     main(int argc,const char *argv[])
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-int     vcf_split(const char *argv[], FILE *vcf_infile, const char *outfile_prefix,
+int     vcf_split(const char *argv[], FILE *vcf_infile,
+		  const char *outfile_prefix,
 		  size_t first_col, size_t last_col,
 		  id_list_t *selected_sample_ids, size_t max_calls,
 		  flag_t flags)
@@ -184,6 +187,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 {
     size_t  columns = last_col - first_col + 1,
 	    c;
+    int     fd;
     FILE    *vcf_outfiles[columns];
     char    filename[PATH_MAX + 1],
 	    cmd[CMD_MAX + 1];
@@ -198,12 +202,12 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	    /* Find a way to do this without thousands of xz processes
 	    if ( flags & FLAG_XZ )
 	    {
-		snprintf(cmd, CMD_MAX, "xz -c > %s.xz",filename);
+		snprintf(cmd, CMD_MAX, "xz --stdout > %s.xz",filename);
 		vcf_outfiles[c] = popen(cmd, "w");
 	    }
 	    else
 	    */
-		vcf_outfiles[c] = fopen(filename, "w");
+	    vcf_outfiles[c] = fopen(filename, "w");
 	    if ( vcf_outfiles[c] == NULL )
 	    {
 		fprintf(stderr, "%s: Error: Cannot create %s.\n",
@@ -222,6 +226,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
     
     // Close all output streams
     for (c = 0; c < columns; ++c)
+    {
 	if ( selected[c] )
 	{
 	    /*
@@ -229,8 +234,22 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 		pclose(vcf_outfiles[c]);
 	    else
 	    */
-		fclose(vcf_outfiles[c]);
+	    fclose(vcf_outfiles[c]);
+	    snprintf(filename, PATH_MAX, "%s%s.vcf.done",
+		     outfile_prefix, sample_ids[c]);
+	    
+	    /*
+	     *  Touch a .done file to indicate completion.  Another script
+	     *  can use this to determine which .vcf files are ready for
+	     *  compression.
+	     */
+	    if ( (fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY)) != -1 )
+		close(fd);
+	    else
+		fprintf(stderr, "%s: Warning: Could not create %s.\n",
+			argv[0], filename);
 	}
+    }
 }
 
 
