@@ -8,6 +8,7 @@ while true; do
 	vcf=${file%.done}
 	if [ ! -e $vcf.xz ]; then
 	    xz $vcf
+	    rm $file
 	fi
     fi
 done
