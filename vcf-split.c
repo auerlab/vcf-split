@@ -210,8 +210,8 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	    vcf_outfiles[c] = fopen(filename, "w");
 	    if ( vcf_outfiles[c] == NULL )
 	    {
-		fprintf(stderr, "%s: Error: Cannot create %s.\n",
-			argv[0], filename);
+		fprintf(stderr, "%s: Cannot create %s: %s.\n",
+			argv[0], filename, strerror(errno));
 		exit(EX_CANTCREAT);
 	    }
 	    tsv_skip_rest_of_line(argv, vcf_infile);
@@ -246,8 +246,8 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	    if ( (fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY)) != -1 )
 		close(fd);
 	    else
-		fprintf(stderr, "%s: Warning: Could not create %s.\n",
-			argv[0], filename);
+		fprintf(stderr, "%s: Warning: Could not create %s: %s.\n",
+			argv[0], filename, strerror(errno));
 	}
     }
 }
@@ -333,7 +333,7 @@ id_list_t   *read_selected_sample_ids(const char *argv[], const char *samples_fi
     
     if ( (fp = fopen(samples_file, "r")) == NULL )
     {
-	fprintf(stderr, "%s: %s: %s\n", argv[0], samples_file,
+	fprintf(stderr, "%s: Cannot open %s: %s\n", argv[0], samples_file,
 		strerror(errno));
 	exit(EX_NOINPUT);
     }
