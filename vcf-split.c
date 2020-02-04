@@ -189,8 +189,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	    c;
     int     fd;
     FILE    *vcf_outfiles[columns];
-    char    filename[PATH_MAX + 1],
-	    cmd[CMD_MAX + 1];
+    char    filename[PATH_MAX + 1];
     
     // Open all output streams
     for (c = 0; c < columns; ++c)
