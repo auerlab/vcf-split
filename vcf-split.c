@@ -67,7 +67,7 @@ int     main(int argc,const char *argv[])
 	    ++next_arg;
 	}
 	
-	if ( strcmp(argv[next_arg],"--sample-id-file") == 0 )
+	else if ( strcmp(argv[next_arg],"--sample-id-file") == 0 )
 	{
 	    selected_samples_file = argv[++next_arg];
 	    ++next_arg;
@@ -83,19 +83,22 @@ int     main(int argc,const char *argv[])
 	 *  the analysis run much faster.
 	 */
 	
-	if ( strcmp(argv[next_arg], "--het-only") == 0 )
+	else if ( strcmp(argv[next_arg], "--het-only") == 0 )
 	{
 	    flags |= FLAG_HET;
 	    ++next_arg;
 	}
 
 	/* Find a way to do this without thousands of xz processes
-	if ( strcmp(argv[next_arg], "--xz") == 0 )
+	else if ( strcmp(argv[next_arg], "--xz") == 0 )
 	{
 	    flags |= FLAG_XZ;
 	    ++next_arg;
 	}
 	*/
+	
+	else
+	    usage(argv);
     }
     
     outfile_prefix = argv[next_arg++];
