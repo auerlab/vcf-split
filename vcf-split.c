@@ -220,11 +220,10 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	}
     }
 
-    // Temporary hack for testing.  Remove limit.
-    c = 0;
-    while ( (c < max_calls) && split_line(argv, vcf_infile, vcf_outfiles,
-	    sample_ids, selected, first_col, last_col, flags) )
-	++c;
+    for (c = 0; (c < max_calls) &&
+		split_line(argv, vcf_infile, vcf_outfiles, sample_ids,
+			   selected, first_col, last_col, flags); ++c)
+	;
     
     // Close all output streams
     for (c = 0; c < columns; ++c)
@@ -308,8 +307,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	    }
 	}
 	
-	tsv_skip_rest_of_line(argv, vcf_infile);
-	return 1;
+	return tsv_skip_rest_of_line(argv, vcf_infile) != EOF;
     }
     else
 	return 0;
@@ -418,7 +416,7 @@ void    usage(const char *argv[])
 {
     // Find a way to do this without thousands of xz processes
     // fprintf(stderr, "Usage: %s: [--xz] [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
-    fprintf(stderr, "Usage: %s: [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
+    fprintf(stderr, "Usage: %s [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
     exit(EX_USAGE);
 }
 
