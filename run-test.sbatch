@@ -41,6 +41,6 @@
 
 bcftools view --min-ac 2 --exclude-types indels \
     ../phased/freeze.8.chr1.pass_only.phased.bcf \
-    | ./vcf-split --xz --max-calls 10000 --het-only \
-    --sample-id-file 102903-sample.txt \
+    | ./vcf-split --het-only --max-calls 10000 \
+    --sample-id-file 10-samples.txt \
     chr01. 1 137977
