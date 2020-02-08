@@ -244,7 +244,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	     *  can use this to determine which .vcf files are ready for
 	     *  compression.
 	     */
-	    if ( (fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY)) != -1 )
+	    if ( (fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0644)) != -1 )
 		close(fd);
 	    else
 		fprintf(stderr, "%s: Warning: Could not create %s: %s.\n",
