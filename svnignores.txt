@@ -1,3 +1,0 @@
-freeze*.bcf
-.*.bak
-vcf-split
