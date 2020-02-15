@@ -239,7 +239,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	     *  compression.
 	     */
 	    snprintf(filename, PATH_MAX, "%s%s.vcf.done",
-		     outfile_prefix, sample_ids[c]);
+		     outfile_prefix, all_sample_ids[c]);
 	    if ( (fd = open(filename, O_CREAT | O_TRUNC | O_WRONLY, 0644)) != -1 )
 		close(fd);
 	    else
