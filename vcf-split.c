@@ -41,16 +41,13 @@ int     main(int argc,const char *argv[])
 {
     char        *eos;
     const char  *outfile_prefix,
-		*selected_samples_file;
-    id_list_t   *selected_sample_ids;
+		*selected_samples_file = NULL;
+    id_list_t   *selected_sample_ids = NULL;
     size_t      first_col,
 		last_col,
 		max_calls = SIZE_MAX,
 		next_arg = 1;
     flag_t      flags = 0;
-    
-    if ( (argc < 6) || (argc > 10) )
-	usage(argv);
     
     next_arg = 1;
     while ( argv[next_arg][0] == '-' )
@@ -108,7 +105,7 @@ int     main(int argc,const char *argv[])
     {
 	fprintf(stderr, "%s: %s: Column must be a positive integer.\n",
 		argv[0], argv[next_arg]);
-	exit(EX_DATAERR);
+	usage(argv);
     }
     
     last_col = strtoul(argv[++next_arg], &eos, 10);
@@ -116,19 +113,19 @@ int     main(int argc,const char *argv[])
     {
 	fprintf(stderr, "%s: %s: Column must be a positive integer.\n",
 		argv[0], argv[next_arg]);
-	exit(EX_DATAERR);
+	usage(argv);
     }
     
     if ( (first_col < 1) || (last_col < 1) || (first_col > last_col) )
     {
 	fprintf(stderr, "%s: Columns must be >= 1 and last_col >= first_col.\n", argv[0]);
-	exit(EX_DATAERR);
+	usage(argv);
     }
     
     if ( last_col - first_col >= MAX_OUTFILES )
     {
 	fprintf(stderr, "%s: Maximum columns is %u\n", argv[0], MAX_OUTFILES);
-	exit(EX_USAGE);
+	usage(argv);
     }
 
     return vcf_split(argv, stdin, outfile_prefix, first_col, last_col,
@@ -153,17 +150,17 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
 
 {
     char    inbuf[BUFF_SIZE + 1],
-	    *sample_ids[last_col - first_col + 1];
+	    *all_sample_ids[last_col - first_col + 1];
     bool    selected[last_col - first_col + 1];
     
     // Input is likely to come from "bcftools view" stdout.
     // What is optimal buffering for a Unix pipe?  Benchmark several values.
     setvbuf(vcf_infile, inbuf, _IOFBF, BUFF_SIZE);
     vcf_skip_header(argv, vcf_infile);
-    vcf_get_sample_ids(argv, vcf_infile, sample_ids, first_col, last_col);
-    tag_selected_columns(sample_ids, selected_sample_ids, selected,
+    vcf_get_sample_ids(argv, vcf_infile, all_sample_ids, first_col, last_col);
+    tag_selected_columns(all_sample_ids, selected_sample_ids, selected,
 			 first_col, last_col);
-    write_output_files(argv, vcf_infile, (const char **)sample_ids, selected,
+    write_output_files(argv, vcf_infile, (const char **)all_sample_ids, selected,
 		       outfile_prefix, first_col, last_col, max_calls, flags);
     
     return EX_OK;
@@ -182,7 +179,7 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
  ***************************************************************************/
 
 void    write_output_files(const char *argv[], FILE *vcf_infile,
-			    const char *sample_ids[], bool selected[],
+			    const char *all_sample_ids[], bool selected[],
 			    const char *outfile_prefix,
 			    size_t first_col, size_t last_col,
 			    size_t max_calls, flag_t flags)
@@ -200,7 +197,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	if ( selected[c] )
 	{
 	    snprintf(filename, PATH_MAX, "%s%s.vcf",
-		     outfile_prefix, sample_ids[c]);
+		     outfile_prefix, all_sample_ids[c]);
 	    /* Find a way to do this without thousands of xz processes
 	    if ( flags & FLAG_XZ )
 	    {
@@ -221,7 +218,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
     }
 
     for (c = 0; (c < max_calls) &&
-		split_line(argv, vcf_infile, vcf_outfiles, sample_ids,
+		split_line(argv, vcf_infile, vcf_outfiles, all_sample_ids,
 			   selected, first_col, last_col, flags); ++c)
 	;
     
@@ -237,7 +234,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	    */
 	    fclose(vcf_outfiles[c]);
 	    snprintf(filename, PATH_MAX, "%s%s.vcf.done",
-		     outfile_prefix, sample_ids[c]);
+		     outfile_prefix, all_sample_ids[c]);
 	    
 	    /*
 	     *  Touch a .done file to indicate completion.  Another script
@@ -264,7 +261,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
  ***************************************************************************/
 
 int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
-		   const char *sample_ids[], bool selected[],
+		   const char *all_sample_ids[], bool selected[],
 		   size_t first_col, size_t last_col, flag_t flags)
 
 {
@@ -291,7 +288,8 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		if ( !(flags & FLAG_HET) || (genotype[0] != genotype[2]) )
 		{
 #if DEBUG
-		    fprintf(stderr, "%zu %s:\n", c, sample_ids[c - first_col]);
+		    fprintf(stderr, "%zu %s:\n", c,
+			    all_sample_ids[c - first_col]);
 		    fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
 			vcf_call.chromosome, vcf_call.pos_str,
 			vcf_call.ref, vcf_call.alt,
@@ -307,7 +305,15 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	    }
 	}
 	
-	return tsv_skip_rest_of_line(argv, vcf_infile) != EOF;
+	/* fprintf(stderr, "split_line(): Skipping rest of line: %s.\n",
+		vcf_call.pos_str); */
+	if ( tsv_skip_rest_of_line(argv, vcf_infile) == EOF )
+	{
+	    fprintf(stderr, "tsv_skip_rest_of_line() encountered EOF.\n");
+	    exit(EX_DATAERR);
+	}
+	else
+	    return 1;
     }
     else
 	return 0;
@@ -323,7 +329,8 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
  *  2019-12-20  Jason Bacon Begin
  ***************************************************************************/
 
-id_list_t   *read_selected_sample_ids(const char *argv[], const char *samples_file)
+id_list_t   *read_selected_sample_ids(const char *argv[],
+				      const char *samples_file)
 
 {
     id_list_t   *list;
@@ -421,20 +428,26 @@ void    usage(const char *argv[])
 }
 
 
-void    tag_selected_columns(char *sample_ids[], id_list_t *selected_sample_ids,
-			     bool selected[], size_t first_col, size_t last_col)
+void    tag_selected_columns(char *all_sample_ids[],
+			     id_list_t *selected_sample_ids, bool selected[],
+			     size_t first_col, size_t last_col)
 
 {
     size_t  c;
     
-    for (c = first_col; c <= last_col; ++c)
-    {
-	selected[c - first_col] =
-	    (bsearch(sample_ids + c - first_col, selected_sample_ids->ids,
-		selected_sample_ids->count, sizeof(char *),
-		(int (*)(const void *, const void *))strptrcmp)
-		!= NULL);
-    }
+    // No --sample-id-file, select all samples
+    if ( selected_sample_ids == NULL )
+	for (c = first_col; c <= last_col; ++c)
+	    selected[c - first_col] = true;
+    else
+	for (c = first_col; c <= last_col; ++c)
+	{
+	    selected[c - first_col] =
+		(bsearch(all_sample_ids + c - first_col, selected_sample_ids->ids,
+		    selected_sample_ids->count, sizeof(char *),
+		    (int (*)(const void *, const void *))strptrcmp)
+		    != NULL);
+	}
 }
 
 
