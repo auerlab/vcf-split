@@ -213,7 +213,6 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 			argv[0], filename, strerror(errno));
 		exit(EX_CANTCREAT);
 	    }
-	    tsv_skip_rest_of_line(argv, vcf_infile);
 	}
     }
 
@@ -265,7 +264,9 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		   size_t first_col, size_t last_col, flag_t flags)
 
 {
-    size_t      c;
+    static size_t   line_count = 0;
+    size_t      c,
+		field_len;
     vcf_call_t  vcf_call;
     char        genotype[VCF_SAMPLE_MAX_CHARS + 1];
     
@@ -275,6 +276,8 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     
     if ( vcf_read_static_fields(argv, vcf_infile, &vcf_call) )
     {
+	++line_count;
+	
 	//fprintf(stderr, "POS = %s\n", vcf_call.pos_str);
 	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
@@ -282,7 +285,17 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	
 	for (; c <= last_col; ++c)
 	{
-	    tsv_read_field(argv, vcf_infile, genotype, VCF_SAMPLE_MAX_CHARS);
+	    if ( tsv_read_field(argv, vcf_infile, genotype, VCF_SAMPLE_MAX_CHARS, &field_len) == EOF )
+	    {
+		fprintf(stderr, "%s: Encountered EOF while reading genotype field.\n", argv[0]);
+		fprintf(stderr, "Line #%zu\n", line_count);
+		fprintf(stderr, "%zu %s:\n", c, all_sample_ids[c - first_col]);
+		fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+		    vcf_call.chromosome, vcf_call.pos_str,
+		    vcf_call.ref, vcf_call.alt,
+		    vcf_call.format, genotype);
+		exit(EX_DATAERR);
+	    }
 	    if ( selected[c - first_col] )
 	    {
 		if ( !(flags & FLAG_HET) || (genotype[0] != genotype[2]) )
@@ -309,7 +322,13 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		vcf_call.pos_str); */
 	if ( tsv_skip_rest_of_line(argv, vcf_infile) == EOF )
 	{
-	    fprintf(stderr, "tsv_skip_rest_of_line() encountered EOF.\n");
+	    fprintf(stderr, "%s: tsv_skip_rest_of_line() encountered EOF.\n", argv[0]);
+	    fprintf(stderr, "Line #%zu\n", line_count);
+	    fprintf(stderr, "%zu %s:\n", c, all_sample_ids[c - first_col]);
+	    fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+		vcf_call.chromosome, vcf_call.pos_str,
+		vcf_call.ref, vcf_call.alt,
+		vcf_call.format, genotype);
 	    exit(EX_DATAERR);
 	}
 	else
