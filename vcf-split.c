@@ -32,9 +32,9 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "vcf-split.h"
 #include "tsvio.h"
 #include "vcfio.h"
+#include "vcf-split.h"
 
 int     main(int argc,const char *argv[])
 
@@ -152,14 +152,29 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
     char    inbuf[BUFF_SIZE + 1],
 	    *all_sample_ids[last_col - first_col + 1];
     bool    selected[last_col - first_col + 1];
+    size_t  c;
     
     // Input is likely to come from "bcftools view" stdout.
     // What is optimal buffering for a Unix pipe?  Benchmark several values.
     setvbuf(vcf_infile, inbuf, _IOFBF, BUFF_SIZE);
     vcf_skip_header(argv, vcf_infile);
     vcf_get_sample_ids(argv, vcf_infile, all_sample_ids, first_col, last_col);
+
+    /*
+    fputs("All sample IDs:", stderr);
+    for (c = 0; c < last_col - first_col + 1; ++c)
+	fprintf(stderr, " %s", all_sample_ids[c]);
+    putc('\n', stderr);
+    */
+    
     tag_selected_columns(all_sample_ids, selected_sample_ids, selected,
 			 first_col, last_col);
+    
+    fputs("Tagged sample IDs:", stderr);
+    for (c = 0; c < selected_sample_ids->count; ++c)
+	fprintf(stderr, " %s", selected_sample_ids->ids[c]);
+    fputc('\n', stderr);
+    
     write_output_files(argv, vcf_infile, (const char **)all_sample_ids, selected,
 		       outfile_prefix, first_col, last_col, max_calls, flags);
     
@@ -216,6 +231,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 	}
     }
 
+    // Heart of the program, split each VCF line across multiple files
     for (c = 0; (c < max_calls) &&
 		split_line(argv, vcf_infile, vcf_outfiles, all_sample_ids,
 			   selected, first_col, last_col, flags); ++c)
@@ -276,38 +292,34 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     
     if ( vcf_read_static_fields(argv, vcf_infile, &vcf_call) )
     {
-	++line_count;
+	if ( ++line_count % 100 == 0 )
+	    fprintf(stderr, "%zu\r", line_count);
 	
 	//fprintf(stderr, "POS = %s\n", vcf_call.pos_str);
 	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
-	    tsv_skip_field(argv, vcf_infile);
+	    if ( tsv_skip_field(argv, vcf_infile) == EOF )
+	    {
+		dump_line(argv, "split_line(): Hit EOF skipping fields before first_col.\n",
+			  &vcf_call, line_count, c, first_col, all_sample_ids,
+			  "Genotype not relevant");
+		exit(EX_DATAERR);
+	    }
 	
 	for (; c <= last_col; ++c)
 	{
-	    if ( tsv_read_field(argv, vcf_infile, genotype, VCF_SAMPLE_MAX_CHARS, &field_len) == EOF )
+	    if ( tsv_read_field(argv, vcf_infile, genotype,
+				VCF_SAMPLE_MAX_CHARS, &field_len) == EOF )
 	    {
-		fprintf(stderr, "%s: Encountered EOF while reading genotype field.\n", argv[0]);
-		fprintf(stderr, "Line #%zu\n", line_count);
-		fprintf(stderr, "%zu %s:\n", c, all_sample_ids[c - first_col]);
-		fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-		    vcf_call.chromosome, vcf_call.pos_str,
-		    vcf_call.ref, vcf_call.alt,
-		    vcf_call.format, genotype);
+		dump_line(argv, "split_line(): Encountered EOF while reading genotype fields.\n",
+			  &vcf_call, line_count, c, first_col, all_sample_ids,
+			  genotype);
 		exit(EX_DATAERR);
 	    }
 	    if ( selected[c - first_col] )
 	    {
 		if ( !(flags & FLAG_HET) || (genotype[0] != genotype[2]) )
 		{
-#if DEBUG
-		    fprintf(stderr, "%zu %s:\n", c,
-			    all_sample_ids[c - first_col]);
-		    fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-			vcf_call.chromosome, vcf_call.pos_str,
-			vcf_call.ref, vcf_call.alt,
-			vcf_call.format, genotype);
-#endif
 		    // FIXME: Use vcf_write_ss_call()
 		    fprintf(vcf_outfiles[c - first_col],
 			"%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
@@ -318,24 +330,38 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	    }
 	}
 	
-	/* fprintf(stderr, "split_line(): Skipping rest of line: %s.\n",
-		vcf_call.pos_str); */
 	if ( tsv_skip_rest_of_line(argv, vcf_infile) == EOF )
 	{
-	    fprintf(stderr, "%s: tsv_skip_rest_of_line() encountered EOF.\n", argv[0]);
-	    fprintf(stderr, "Line #%zu\n", line_count);
-	    fprintf(stderr, "%zu %s:\n", c, all_sample_ids[c - first_col]);
-	    fprintf(stderr, "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-		vcf_call.chromosome, vcf_call.pos_str,
-		vcf_call.ref, vcf_call.alt,
-		vcf_call.format, genotype);
+	    dump_line(argv, "split_line(): Encountered EOF skipping fields after last_col.\n",
+		      &vcf_call, line_count, c, first_col, all_sample_ids,
+		      "Genotype not relevant");
 	    exit(EX_DATAERR);
 	}
 	else
 	    return 1;
     }
     else
+    {
+	fprintf(stderr, "%s: split_line(): No more VCF calls.\n", argv[0]);
+	fprintf(stderr, "Processed %zu multi-sample VCF calls.\n", line_count);
 	return 0;
+    }
+}
+
+
+void    dump_line(const char *argv[], const char *message, 
+		  vcf_call_t *vcf_call, size_t line_count, size_t col,
+		  size_t first_col, const char *all_sample_ids[], char *genotype)
+
+{
+    fprintf(stderr, "%s: %s: ", argv[0], message);
+    fprintf(stderr, "Line #%zu\n", line_count);
+    fprintf(stderr, "Column: %zu Sample ID: %s:\n",
+	    col, all_sample_ids[col - first_col]);
+    fprintf(stderr, "SS VCF: %s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+	    vcf_call->chromosome, vcf_call->pos_str,
+	    vcf_call->ref, vcf_call->alt,
+	    vcf_call->format, genotype);
 }
 
 
