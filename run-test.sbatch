@@ -39,9 +39,11 @@
 
 #SBATCH --ntasks=2
 
+# --max-calls 100000
+
 mkdir -p SS-VCFs
 bcftools view --min-ac 2 --exclude-types indels \
     ../phased/freeze.8.chr22.pass_only.phased.bcf \
-    | ./vcf-split --het-only --max-calls 10000 \
+    | ./vcf-split --het-only \
     --sample-id-file LLS_WHIMS_NWDID_TOPMED.csv \
     SS-VCFs/chr21. 1 137977

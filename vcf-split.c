@@ -50,7 +50,7 @@ int     main(int argc,const char *argv[])
     flag_t      flags = 0;
     
     next_arg = 1;
-    while ( argv[next_arg][0] == '-' )
+    while ( (next_arg < argc ) && (argv[next_arg][0] == '-') )
     {
 	if ( strcmp(argv[next_arg],"--max-calls") == 0 )
 	{
@@ -98,6 +98,9 @@ int     main(int argc,const char *argv[])
 	    usage(argv);
     }
     
+    if ( next_arg > argc - 3 )
+	usage(argv);
+
     outfile_prefix = argv[next_arg++];
     
     first_col = strtoul(argv[next_arg], &eos, 10);
