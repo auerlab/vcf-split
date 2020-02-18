@@ -235,9 +235,9 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
     }
 
     // Heart of the program, split each VCF line across multiple files
-    for (c = 0; (c < max_calls) &&
-		split_line(argv, vcf_infile, vcf_outfiles, all_sample_ids,
-			   selected, first_col, last_col, flags); ++c)
+    for (c = 0; split_line(argv, vcf_infile, vcf_outfiles, all_sample_ids,
+			   selected, first_col, last_col, max_calls, flags);
+			   ++c)
 	;
     
     // Close all output streams
@@ -280,21 +280,25 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 
 int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		   const char *all_sample_ids[], bool selected[],
-		   size_t first_col, size_t last_col, flag_t flags)
+		   size_t first_col, size_t last_col, size_t max_calls,
+		   flag_t flags)
 
 {
-    static size_t   line_count = 0;
-    size_t      c,
-		field_len,
-		max_info_len = 0;
-    vcf_call_t  vcf_call;
-    char        genotype[VCF_SAMPLE_MAX_CHARS + 1];
+    static size_t   line_count = 0,
+		    max_info_len = 0;
+    size_t          c,
+		    field_len;
+    vcf_call_t      vcf_call;
+    char            genotype[VCF_SAMPLE_MAX_CHARS + 1];
     
     /*
      *  Read in VCF fields
      */
     
-    if ( vcf_read_static_fields(argv, vcf_infile, &vcf_call) )
+    // Check max_calls here rather than outside in order to print the
+    // end-of-run report below
+    if ( (line_count < max_calls) && 
+	 vcf_read_static_fields(argv, vcf_infile, &vcf_call) )
     {
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
@@ -329,10 +333,10 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		{
 		    // FIXME: Use vcf_write_ss_call()
 		    fprintf(vcf_outfiles[c - first_col],
-			"%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-			vcf_call.chromosome, vcf_call.pos_str,
-			vcf_call.ref, vcf_call.alt, 
-			vcf_call.format, genotype);
+			    "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+			    vcf_call.chromosome, vcf_call.pos_str,
+			    vcf_call.ref, vcf_call.alt, 
+			    vcf_call.format, genotype);
 		}
 	    }
 	}
