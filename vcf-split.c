@@ -282,7 +282,8 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 {
     static size_t   line_count = 0;
     size_t      c,
-		field_len;
+		field_len,
+		max_info_len = 0;
     vcf_call_t  vcf_call;
     char        genotype[VCF_SAMPLE_MAX_CHARS + 1];
     
@@ -294,6 +295,9 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     {
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
+	
+	if ( vcf_call.info_len > max_info_len )
+	    max_info_len = vcf_call.info_len;
 	
 	//fprintf(stderr, "POS = %s\n", vcf_call.pos_str);
 	// Skip columns before first_col
@@ -344,6 +348,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     {
 	fprintf(stderr, "%s: split_line(): No more VCF calls.\n", argv[0]);
 	fprintf(stderr, "Processed %zu multi-sample VCF calls.\n", line_count);
+	fprintf(stderr, "Max info_len = %zu.\n", max_info_len);
 	return 0;
     }
 }
