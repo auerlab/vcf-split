@@ -292,7 +292,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     
     if ( vcf_read_static_fields(argv, vcf_infile, &vcf_call) )
     {
-	if ( ++line_count % 100 == 0 )
+	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
 	
 	//fprintf(stderr, "POS = %s\n", vcf_call.pos_str);
