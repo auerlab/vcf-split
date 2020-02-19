@@ -288,6 +288,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		    max_info_len = 0;
     size_t          c,
 		    field_len;
+    int             delimiter;
     vcf_call_t      vcf_call;
     char            genotype[VCF_SAMPLE_MAX_CHARS + 1];
     
@@ -319,8 +320,8 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	
 	for (; c <= last_col; ++c)
 	{
-	    if ( tsv_read_field(argv, vcf_infile, genotype,
-				VCF_SAMPLE_MAX_CHARS, &field_len) == EOF )
+	    if ( (delimiter = tsv_read_field(argv, vcf_infile, genotype,
+				VCF_SAMPLE_MAX_CHARS, &field_len)) == EOF )
 	    {
 		dump_line(argv, "split_line(): Encountered EOF while reading genotype fields.\n",
 			  &vcf_call, line_count, c, first_col, all_sample_ids,
@@ -340,16 +341,19 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		}
 	    }
 	}
-	
-	if ( tsv_skip_rest_of_line(argv, vcf_infile) == EOF )
+
+	// If this wasn't the last sample in the line, skip to EOL
+	if ( delimiter != '\n' )
 	{
-	    dump_line(argv, "split_line(): Encountered EOF skipping fields after last_col.\n",
-		      &vcf_call, line_count, c, first_col, all_sample_ids,
-		      "Genotype not relevant");
-	    exit(EX_DATAERR);
+	    if ( tsv_skip_rest_of_line(argv, vcf_infile) == EOF )
+	    {
+		dump_line(argv, "split_line(): Encountered EOF skipping fields after last_col.\n",
+			  &vcf_call, line_count, c, first_col, all_sample_ids,
+			  "Genotype not relevant");
+		exit(EX_DATAERR);
+	    }
 	}
-	else
-	    return 1;
+	return 1;
     }
     else
     {
@@ -366,8 +370,8 @@ void    dump_line(const char *argv[], const char *message,
 		  size_t first_col, const char *all_sample_ids[], char *genotype)
 
 {
-    fprintf(stderr, "%s: %s: ", argv[0], message);
-    fprintf(stderr, "Line #%zu\n", line_count);
+    fprintf(stderr, "%s: %s\n", argv[0], message);
+    fprintf(stderr, "Input line: %zu\n", line_count);
     fprintf(stderr, "Column: %zu Sample ID: %s:\n",
 	    col, all_sample_ids[col - first_col]);
     fprintf(stderr, "SS VCF: %s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
