@@ -310,18 +310,30 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	//fprintf(stderr, "POS = %s\n", vcf_call.pos_str);
 	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
-	    if ( tsv_skip_field(argv, vcf_infile) == EOF )
+	{
+	    delimiter = tsv_skip_field(argv, vcf_infile);
+	    if ( delimiter == EOF )
 	    {
 		dump_line(argv, "split_line(): Hit EOF skipping fields before first_col.\n",
 			  &vcf_call, line_count, c, first_col, all_sample_ids,
 			  "Genotype not relevant");
 		exit(EX_DATAERR);
 	    }
+	    else if ( delimiter == '\n' )
+	    {
+		fprintf(stderr, "%s: split_line(): Reached EOL before first_col.\n", argv[0]);
+		fprintf(stderr, "Does your input really have %zu samples?\n",
+			first_col);
+		exit(EX_USAGE);
+	    }
+	}
 	
-	for (; c <= last_col; ++c)
+	for (; (c <= last_col) && 
+	       (delimiter = tsv_read_field(argv, vcf_infile, genotype,
+				VCF_SAMPLE_MAX_CHARS, &field_len)) != '\n';
+				++c)
 	{
-	    if ( (delimiter = tsv_read_field(argv, vcf_infile, genotype,
-				VCF_SAMPLE_MAX_CHARS, &field_len)) == EOF )
+	    if ( delimiter == EOF )
 	    {
 		dump_line(argv, "split_line(): Encountered EOF while reading genotype fields.\n",
 			  &vcf_call, line_count, c, first_col, all_sample_ids,
@@ -340,6 +352,12 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 			    vcf_call.format, genotype);
 		}
 	    }
+	}
+	if ( c < last_col )
+	{
+	    fprintf(stderr, "%s: split_line(): Reached EOL before last_col.\n", argv[0]);
+	    fprintf(stderr, "Does your input really have %zu samples?\n", last_col);
+	    exit(EX_USAGE);
 	}
 
 	// If this wasn't the last sample in the line, skip to EOL
