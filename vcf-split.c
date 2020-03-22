@@ -311,7 +311,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
 	{
-	    delimiter = tsv_skip_field(argv, vcf_infile);
+	    delimiter = tsv_skip_field(vcf_infile);
 	    if ( delimiter == EOF )
 	    {
 		dump_line(argv, "split_line(): Hit EOF skipping fields before first_col.\n",
@@ -329,7 +329,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	}
 	
 	for (; (c <= last_col) && 
-	       (delimiter = tsv_read_field(argv, vcf_infile, genotype,
+	       (delimiter = tsv_read_field(vcf_infile, genotype,
 				VCF_SAMPLE_MAX_CHARS, &field_len)) != '\n';
 				++c)
 	{
@@ -363,7 +363,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	// If this wasn't the last sample in the line, skip to EOL
 	if ( delimiter != '\n' )
 	{
-	    if ( tsv_skip_rest_of_line(argv, vcf_infile) == EOF )
+	    if ( tsv_skip_rest_of_line(vcf_infile) == EOF )
 	    {
 		dump_line(argv, "split_line(): Encountered EOF skipping fields after last_col.\n",
 			  &vcf_call, line_count, c, first_col, all_sample_ids,
