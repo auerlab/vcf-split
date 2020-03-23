@@ -160,8 +160,8 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
     // Input is likely to come from "bcftools view" stdout.
     // What is optimal buffering for a Unix pipe?  Benchmark several values.
     setvbuf(vcf_infile, inbuf, _IOFBF, BUFF_SIZE);
-    vcf_skip_header(argv, vcf_infile);
-    vcf_get_sample_ids(argv, vcf_infile, all_sample_ids, first_col, last_col);
+    vcf_skip_header(vcf_infile);
+    vcf_get_sample_ids(vcf_infile, all_sample_ids, first_col, last_col);
 
     /*
     fputs("All sample IDs:", stderr);
@@ -299,7 +299,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
-	 (vcf_read_static_fields(argv, vcf_infile, &vcf_call) == VCF_READ_OK) )
+	 (vcf_read_static_fields(vcf_infile, &vcf_call) == VCF_READ_OK) )
     {
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
