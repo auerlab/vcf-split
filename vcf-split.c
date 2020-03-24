@@ -304,10 +304,9 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
 	
-	if ( vcf_call.info_len > max_info_len )
-	    max_info_len = vcf_call.info_len;
+	if ( VCF_INFO_LEN(&vcf_call) > max_info_len )
+	    max_info_len = VCF_INFO_LEN(&vcf_call);
 	
-	//fprintf(stderr, "POS = %s\n", vcf_call.pos_str);
 	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
 	{
@@ -344,12 +343,12 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	    {
 		if ( !(flags & FLAG_HET) || (genotype[0] != genotype[2]) )
 		{
-		    // FIXME: Use vcf_write_ss_call()
+		    // FIXME: Use vcf_write_static_fields()
 		    fprintf(vcf_outfiles[c - first_col],
 			    "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-			    vcf_call.chromosome, vcf_call.pos_str,
-			    vcf_call.ref, vcf_call.alt, 
-			    vcf_call.format, genotype);
+			    VCF_CHROMOSOME(&vcf_call), VCF_POS_STR(&vcf_call),
+			    VCF_REF(&vcf_call), VCF_ALT(&vcf_call), 
+			    VCF_FORMAT(&vcf_call), genotype);
 		}
 	    }
 	}
@@ -393,9 +392,9 @@ void    dump_line(const char *argv[], const char *message,
     fprintf(stderr, "Column: %zu Sample ID: %s:\n",
 	    col, all_sample_ids[col - first_col]);
     fprintf(stderr, "SS VCF: %s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-	    vcf_call->chromosome, vcf_call->pos_str,
-	    vcf_call->ref, vcf_call->alt,
-	    vcf_call->format, genotype);
+	    VCF_CHROMOSOME(vcf_call), VCF_POS_STR(vcf_call),
+	    VCF_REF(vcf_call), VCF_ALT(vcf_call),
+	    VCF_FORMAT(vcf_call), genotype);
 }
 
 
