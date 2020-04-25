@@ -32,8 +32,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "tsvio.h"
-#include "vcfio.h"
+#include <vcfio.h>
 #include "vcf-split.h"
 
 int     main(int argc,const char *argv[])
@@ -526,11 +525,4 @@ void    tag_selected_columns(char *all_sample_ids[],
 		    (int (*)(const void *, const void *))strptrcmp)
 		    != NULL);
 	}
-}
-
-
-int     strptrcmp(const char **p1, const char **p2)
-
-{
-    return strcmp(*p1, *p2);
 }
