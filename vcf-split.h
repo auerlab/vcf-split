@@ -8,6 +8,7 @@
 #define SAMPLE_ID_MAX       256         // Use only for temp variables
 #define CMD_MAX             128
 
+// FIXME: Encapsulate this and move to biolibc?
 typedef struct
 {
     size_t  count;
