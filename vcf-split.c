@@ -171,14 +171,18 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
     
     tag_selected_columns(all_sample_ids, selected_sample_ids, selected,
 			 first_col, last_col);
+
+    if ( selected_sample_ids != NULL )
+    {
+	fputs("Tagged sample IDs:", stderr);
+	for (c = 0; c < selected_sample_ids->count; ++c)
+	    fprintf(stderr, " %s", selected_sample_ids->ids[c]);
+	fputc('\n', stderr);
+    }
     
-    fputs("Tagged sample IDs:", stderr);
-    for (c = 0; c < selected_sample_ids->count; ++c)
-	fprintf(stderr, " %s", selected_sample_ids->ids[c]);
-    fputc('\n', stderr);
-    
-    write_output_files(argv, vcf_infile, (const char **)all_sample_ids, selected,
-		       outfile_prefix, first_col, last_col, max_calls, flags);
+    write_output_files(argv, vcf_infile, (const char **)all_sample_ids,
+		       selected, outfile_prefix,
+		       first_col, last_col, max_calls, flags);
     
     return EX_OK;
 }
