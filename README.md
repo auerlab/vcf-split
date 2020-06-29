@@ -27,7 +27,12 @@ and disk access.  It does not inhale large amounts of data into RAM, so memory
 use is trivial and it runs mostly from cache, making it very fast.
 
 The example BCF file mentioned above can be split in a few days on a single
-server using two cores, with three runs of about 45,000 output files each.
+server using two cores, with three runs of about 45,000 samples each.
+Note that if running multiple vcf-split processes in parallel on a cluster
+using the same file server, you may need to reduce the number of samples.
+We found that splitting all 23 chromosomes simultaneously to the same file
+server was limited to about 10,000 samples at once to keep CPU utilization
+reasonable.
 
 vcf-split is intended to build cleanly in any POSIX environment.  Please
 don't hesitate to open an issue if you encounter problems on any
