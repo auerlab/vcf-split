@@ -41,7 +41,7 @@ Building and installing:
 
 vcf-split depends on [biolibc](https://github.com/auerlab/biolibc).
 
-Set LOCALBASE to the prefix of lib/libvcfio.a.  Default is ../local.
+Set LOCALBASE to the prefix of lib/libbiolibc.a.  Default is ../local.
 (See Makefile).
 
 Set PREFIX to the prefix where you would like to install.  Default is
