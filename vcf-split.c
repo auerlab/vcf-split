@@ -299,6 +299,9 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
      *  Read in VCF fields
      */
     
+    vcf_call_init(&vcf_call, VCF_INFO_MAX_CHARS, VCF_FORMAT_MAX_CHARS,
+		  VCF_SAMPLE_MAX_CHARS);
+
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
