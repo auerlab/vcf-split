@@ -23,7 +23,8 @@ typedef struct
 
 typedef unsigned char   flag_t;
 
-#define FLAG_HET    0x01
-#define FLAG_XZ     0x02
+#define FLAG_NONE   0x0
+#define FLAG_HET    0x1
+#define FLAG_ALT    0x2
 
 #include "vcf-split-protos.h"

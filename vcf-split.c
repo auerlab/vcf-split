@@ -38,7 +38,8 @@
 int     main(int argc,const char *argv[])
 
 {
-    char        *eos;
+    char        *field_spec,
+		*eos;
     const char  *outfile_prefix,
 		*selected_samples_file = NULL;
     id_list_t   *selected_sample_ids = NULL;
@@ -47,6 +48,7 @@ int     main(int argc,const char *argv[])
 		max_calls = SIZE_MAX,
 		next_arg = 1;
     flag_t      flags = 0;
+    vcf_field_mask_t    field_mask = VCF_FIELD_ALL;
     
     next_arg = 1;
     while ( (next_arg < argc ) && (argv[next_arg][0] == '-') )
@@ -85,13 +87,27 @@ int     main(int argc,const char *argv[])
 	    ++next_arg;
 	}
 
-	/* Find a way to do this without thousands of xz processes
-	else if ( strcmp(argv[next_arg], "--xz") == 0 )
+	else if ( strcmp(argv[next_arg], "--alt-only") == 0 )
 	{
-	    flags |= FLAG_XZ;
+	    if ( flags & FLAG_HET )
+	    {
+		fprintf(stderr,
+		    "%s: --het-only and --alt-only are mutually exclusive.\n",
+		    argv[0]);
+		exit(EX_USAGE);
+	    }
+	    flags |= FLAG_ALT;
 	    ++next_arg;
 	}
-	*/
+
+	else if ( strcmp(argv[next_arg], "--output-fields") == 0 )
+	{
+	    ++next_arg;
+	    field_spec = (char *)argv[next_arg++];
+	    if ( (field_mask = vcf_parse_field_spec(field_spec))
+		    == VCF_FIELD_ERROR )
+		usage(argv);
+	}
 	
 	else
 	    usage(argv);
@@ -131,7 +147,7 @@ int     main(int argc,const char *argv[])
     }
 
     return vcf_split(argv, stdin, outfile_prefix, first_col, last_col,
-		     selected_sample_ids, max_calls, flags);
+		     selected_sample_ids, max_calls, flags, field_mask);
 }
 
 
@@ -148,18 +164,19 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
 		  const char *outfile_prefix,
 		  size_t first_col, size_t last_col,
 		  id_list_t *selected_sample_ids, size_t max_calls,
-		  flag_t flags)
+		  flag_t flags, vcf_field_mask_t field_mask)
 
 {
     char    inbuf[BUFF_SIZE + 1],
 	    *all_sample_ids[last_col - first_col + 1];
     bool    selected[last_col - first_col + 1];
     size_t  c;
+    FILE    *header_stream;
     
     // Input is likely to come from "bcftools view" stdout.
     // What is optimal buffering for a Unix pipe?  Benchmark several values.
     setvbuf(vcf_infile, inbuf, _IOFBF, BUFF_SIZE);
-    vcf_skip_header(vcf_infile);
+    header_stream = vcf_skip_header(vcf_infile);
     vcf_get_sample_ids(vcf_infile, all_sample_ids, first_col, last_col);
 
     /*
@@ -180,9 +197,10 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
 	fputc('\n', stderr);
     }
     
-    write_output_files(argv, vcf_infile, (const char **)all_sample_ids,
+    write_output_files(argv, vcf_infile, header_stream, 
+		       (const char **)all_sample_ids,
 		       selected, outfile_prefix,
-		       first_col, last_col, max_calls, flags);
+		       first_col, last_col, max_calls, flags, field_mask);
     
     return EX_OK;
 }
@@ -199,18 +217,20 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-void    write_output_files(const char *argv[], FILE *vcf_infile,
+void    write_output_files(const char *argv[], FILE *vcf_infile, FILE *header,
 			    const char *all_sample_ids[], bool selected[],
 			    const char *outfile_prefix,
 			    size_t first_col, size_t last_col,
-			    size_t max_calls, flag_t flags)
+			    size_t max_calls, flag_t flags,
+			    vcf_field_mask_t field_mask)
 
 {
     size_t  columns = last_col - first_col + 1,
 	    c;
     int     fd;
     FILE    *vcf_outfiles[columns];
-    char    filename[PATH_MAX + 1];
+    char    filename[PATH_MAX + 1],
+	    file_format[129];
     
     // Open all output streams
     for (c = 0; c < columns; ++c)
@@ -234,12 +254,25 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 			argv[0], filename, strerror(errno));
 		exit(EX_CANTCREAT);
 	    }
+	    
+	    /*
+	     *  Add basic header
+	     *  FIXME: Add option to copy all/part of source header
+	     */
+	    
+	    rewind(header);
+	    fgets(file_format, 128, header);
+	    if ( memcmp(file_format, "##fileformat", 12) == 0 )
+		fputs(file_format, vcf_outfiles[c]);
+	    fputs("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n",
+		  vcf_outfiles[c]);
 	}
     }
 
     // Heart of the program, split each VCF line across multiple files
     for (c = 0; split_line(argv, vcf_infile, vcf_outfiles, all_sample_ids,
-			   selected, first_col, last_col, max_calls, flags);
+			   selected, first_col, last_col, max_calls, flags,
+			   field_mask);
 			   ++c)
 	;
     
@@ -284,7 +317,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile,
 int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		   const char *all_sample_ids[], bool selected[],
 		   size_t first_col, size_t last_col, size_t max_calls,
-		   flag_t flags)
+		   flag_t flags, vcf_field_mask_t field_mask)
 
 {
     static size_t   line_count = 0,
@@ -293,7 +326,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		    field_len;
     int             delimiter;
     vcf_call_t      vcf_call;
-    char            genotype[VCF_SAMPLE_MAX_CHARS + 1];
+    char            *genotype;
     
     /*
      *  Read in VCF fields
@@ -301,7 +334,8 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     
     vcf_call_init(&vcf_call, VCF_INFO_MAX_CHARS, VCF_FORMAT_MAX_CHARS,
 		  VCF_SAMPLE_MAX_CHARS);
-
+    genotype = vcf_call.single_sample;
+    
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
@@ -347,14 +381,21 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	    }
 	    if ( selected[c - first_col] )
 	    {
-		if ( !(flags & FLAG_HET) || (genotype[0] != genotype[2]) )
+		if ( (flags == FLAG_NONE) ||
+		     ((flags == FLAG_HET) && (genotype[0] != genotype[2])) ||
+		     ((flags == FLAG_ALT) &&
+		      ((genotype[0] == '1') || (genotype[2] == '1'))) )
 		{
-		    // FIXME: Use vcf_write_static_fields()
+		    vcf_write_ss_call(vcf_outfiles[c - first_col],
+					    &vcf_call, field_mask);
+		    /*
 		    fprintf(vcf_outfiles[c - first_col],
-			    "%s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+			    "%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\n",
 			    VCF_CHROMOSOME(&vcf_call), VCF_POS_STR(&vcf_call),
-			    VCF_REF(&vcf_call), VCF_ALT(&vcf_call), 
-			    VCF_FORMAT(&vcf_call), genotype);
+			    VCF_ID(&vcf_call), VCF_REF(&vcf_call),
+			    VCF_ALT(&vcf_call), VCF_FORMAT(&vcf_call),
+			    genotype);
+		    */
 		}
 	    }
 	}
@@ -505,9 +546,28 @@ size_t  read_string(FILE *fp, char *buff, size_t maxlen)
 void    usage(const char *argv[])
 
 {
-    // Find a way to do this without thousands of xz processes
-    // fprintf(stderr, "Usage: %s: [--xz] [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
-    fprintf(stderr, "Usage: %s [--het-only] [--max-calls N] [--sample-id-file file] output-file-prefix first-column last-column\n", argv[0]);
+    fprintf(stderr, "\nUsage: %s\n\t[--het-only]\n\t[--alt-only]\n\t"
+		    "[--max-calls N]\n\t[--sample-id-file file]\n\t"
+		    "[--output-fields field-spec]\n\toutput-file-prefix\n\t"
+		    "first-column\n\tlast-column\n\n", argv[0]);
+    fputs("Press return to continue...", stderr);
+    getchar();
+    fprintf(stderr, "\n--het-only indicates that only heterozygous fields are output.\n"
+		    "--alt-only indicates that only fields with at least one alt allele are output.\n"
+		    "Allowing vcf-split to perform this filtering is faster than doing\n"
+		    "it in bcftools in some cases.\n\n"
+		    "max-calls limits the number of calls processed for testing.\n\n"
+		    "--sample-id-file indicates a list of samples to extract.  Names must\n"
+		    "match the column header in the input VCF.\n\n"
+		    "field-spec is a comma-separated list of fields to include in the output\n"
+		    "including one or more of\n\n"
+		    "chrom,pos,id,ref,alt,qual,filter,info\n\n"
+		    "fields not indicated are replaced with a '.'.\n\n"
+		    "output-file-prefix is prepended to .vcf.xz\n"
+		    "It may include one or more subdirectories\n\n"
+		    "first-column and last column indicate the range of samples to process\n"
+		    "Output is the intersection of this range and --sample-id-file.\n\n"
+		    );
     exit(EX_USAGE);
 }
 

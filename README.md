@@ -1,26 +1,23 @@
 # vcf-split
 Split combined-sample VCF stream into single-sample VCF files.
 
-It is currently suitable for generating inputs for haplohseq, but the
-intention is to generalize it in the future.
-
 Traditional methods for splitting a multi-sample VCF stream into single-sample
 files involve a loop or parallel job that rereads the multi-sample input for
-every sample.  This can
+each sample.  This can
 become a major bottleneck where there are many samples and/or the input
 is compressed.  For example, using "bcftools view" with optimal filtering
 options to merely decode one human chromosome BCF with
 137,977 samples and pipe the VCF output through "wc" took 12 hours on a
 fast server using 2 cores.  To split it into 137,977 single-sample VCFs
 would therefore require about 137,977 * 12 * 2 = ~3 million core-hours.
-This translates to 171 years on a single server or 125 days using 1000 cores
+This translates to 171 years on a single core or 125 days using 1000 cores
 on an HPC cluster.
 
 vcf-split solves this problem by writing a large number of single-sample VCFs
-simultaneously during a single read of the multi-sample input.  The number
+simultaneously during a single read through the multi-sample input.  The number
 of parallel output files is limited only by the open file limit of your
 system, which is typically at least in the tens of thousands on a modern
-Unix workstation or server.
+Unix-like system.
 
 vcf-split is written entirely in C and attempts to optimize CPU, memory,
 and disk access.  It does not inhale large amounts of data into RAM, so memory
@@ -57,3 +54,16 @@ Then simply run
 ```sh
 make install
 ```
+
+vcf-split supports masking off useless fields.  For example, haplohseq only
+requires the CHROM, POS, REF, ALT, and FORMAT fields along with the single
+sample data.  This can be indicated with
+
+```
+vcf-split --output-fields chrom,pos,ref,alt,format
+```
+
+All other fields are replaced with a '.', saving considerable space.
+
+vcf-split can also filter for heterozygous sites using --het-only or
+sites with at least one alt allele using --alt-only.

@@ -1,4 +1,4 @@
 vcf-split.o: vcf-split.c ../local/include/vcfio.h \
-  ../local/include/tsvio.h vcf-split.h vcf-split-protos.h
+  ../local/include/dsvio.h vcf-split.h vcf-split-protos.h
 	${CC} -c ${CFLAGS} vcf-split.c
 
