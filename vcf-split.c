@@ -325,14 +325,16 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     size_t          c,
 		    field_len;
     int             delimiter;
-    vcf_call_t      vcf_call;
+    static vcf_call_t      vcf_call = VCF_CALL_INIT;
     char            *genotype;
     
     /*
      *  Read in VCF fields
      */
     
-    vcf_call_init(&vcf_call, VCF_INFO_MAX_CHARS, VCF_FORMAT_MAX_CHARS,
+    /* Declared as static: Allocate only once and reuse */
+    if ( vcf_call.single_sample == NULL )
+	vcf_call_init(&vcf_call, VCF_INFO_MAX_CHARS, VCF_FORMAT_MAX_CHARS,
 		  VCF_SAMPLE_MAX_CHARS);
     genotype = vcf_call.single_sample;
     
