@@ -258,7 +258,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile, FILE *header,
 	    fgets(file_format, 128, header);
 	    if ( memcmp(file_format, "##fileformat", 12) == 0 )
 		fputs(file_format, vcf_outfiles[c]);
-	    fputs("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\n",
+	    fputs("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n",
 		  vcf_outfiles[c]);
 	}
     }
@@ -600,9 +600,11 @@ void    tag_selected_columns(char *all_sample_ids[],
     if ( total_selected > MAX_OUTFILES )
     {
 	fprintf(stderr,
-		"vcf-split: Maximum columns is %u\nYou have selected %zu.\n"
-		"Increase MAX_OUTFILES and recompile if you really want to stress your system.\n",
-		MAX_OUTFILES, total_selected);
+		"vcf-split:  Maximum output files = %u.  You have selected %zu.\n"
+		"Increase MAX_OUTFILES and recompile if a %ux speedup is really not enough\n"
+		"and you want to bludgeon your system.  Otherwise, you can process the\n"
+		"multi-sample input file in %u-sample chunks.\n",
+		MAX_OUTFILES, total_selected, MAX_OUTFILES, MAX_OUTFILES);
 	exit(EX_USAGE);
     }
 }
