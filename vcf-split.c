@@ -140,12 +140,6 @@ int     main(int argc,const char *argv[])
 	usage(argv);
     }
     
-    if ( last_col - first_col >= MAX_OUTFILES )
-    {
-	fprintf(stderr, "%s: Maximum columns is %u\n", argv[0], MAX_OUTFILES);
-	usage(argv);
-    }
-
     return vcf_split(argv, stdin, outfile_prefix, first_col, last_col,
 		     selected_sample_ids, max_calls, flags, field_mask);
 }
@@ -579,19 +573,36 @@ void    tag_selected_columns(char *all_sample_ids[],
 			     size_t first_col, size_t last_col)
 
 {
-    size_t  c;
+    size_t  c,
+	    total_selected;
     
     // No --sample-id-file, select all samples
     if ( selected_sample_ids == NULL )
+    {
 	for (c = first_col; c <= last_col; ++c)
 	    selected[c - first_col] = true;
+	total_selected = last_col - first_col + 1;
+    }
     else
-	for (c = first_col; c <= last_col; ++c)
+    {
+	for (c = first_col, total_selected = 0; c <= last_col; ++c)
 	{
 	    selected[c - first_col] =
 		(bsearch(all_sample_ids + c - first_col, selected_sample_ids->ids,
 		    selected_sample_ids->count, sizeof(char *),
 		    (int (*)(const void *, const void *))strptrcmp)
 		    != NULL);
+	    if ( selected[c - first_col] )
+		++total_selected;
 	}
+    }
+
+    if ( total_selected > MAX_OUTFILES )
+    {
+	fprintf(stderr,
+		"vcf-split: Maximum columns is %u\nYou have selected %zu.\n"
+		"Increase MAX_OUTFILES and recompile if you really want to stress your system.\n",
+		MAX_OUTFILES, total_selected);
+	exit(EX_USAGE);
+    }
 }

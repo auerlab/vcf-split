@@ -3,8 +3,7 @@
  */
 
 #define BUFF_SIZE           1024*1024
-#define MAX_OUTFILES        200000
-#define MAX_SAMPLES         1000000
+#define MAX_OUTFILES        10000
 #define SAMPLE_ID_MAX       256         // Use only for temp variables
 #define CMD_MAX             128
 
