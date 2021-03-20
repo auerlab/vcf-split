@@ -10,7 +10,9 @@ vcf-split \- Efficiently split a multi-sample VCF stream into single-sample file
 .PP
 .nf 
 .na 
-vcf-split [--het-only] [--max-calls N] [--sample-id-file file] 
+vcf-split \\
+    [--het-only] [--alt-only] [--max-calls N] \\
+    [--sample-id-file file] [--output-fields field-spec] \\
     output-file-prefix first-column last-column < file.vcf
 
 bcftools view file.bcf | vcf-split ...
@@ -28,6 +30,10 @@ to perform the heterozygous site selection increases pipeline performance
 considerably.
 
 .TP
+\fB\-\-alt\-only
+Output only sites with at least one ALT allele.
+
+.TP
 \fB\-\-max\-calls N
 Limit the number of VCF calls processed (for quick testing without the need to
 generate smaller test input files).
@@ -36,6 +42,13 @@ generate smaller test input files).
 \fB\-\-sample\-id\-file filename
 File containing a whitespace-separated list of arbitrary sample IDS, which
 must match the sample names in the VCF input.
+
+.TP
+\fB\-\-output\-fields field-spec
+Indicates which fields to pass to the output.  Fields not indicated here are
+replaced with a reasonable placeholder for that field, such as ".".
+field-spec is a comma-separated list of fields to include in the output
+including one or more of chrom,pos,id,ref,alt,qual,filter, and info.
 
 .TP
 .B output-file-prefix
@@ -48,8 +61,11 @@ directory).
 .B vcf-split opens one output stream for each sample and many systems
 cannot support more than 30,000 to 40,000 open files at a time.
 E.g. for a 100,000 sample VCF stream, you may want to do multiple runs of
-25,000 each (see EXAMPLES below).  Note that using --sample-id-file also
-limits the number of open files and may make multiple runs unnecesary.
+10,000 each (see EXAMPLES below).  To prevent system overload, the maximum
+number of open files is hard-coded at 10,000.  To override this limit, you
+must edit vcf-split.h and recompile.  Note that using
+--sample-id-file may limits the number of open files to less than
+last-column - first_column + 1 and may make multiple runs unnecessary.
 
 \" Optional sections
 .SH "PURPOSE"
@@ -61,45 +77,39 @@ efficiently splits a multi-sample VCF stream into single-sample VCF files.
 
 Traditional methods for splitting a multi-sample VCF stream into single-sample
 files involve a loop or parallel job that rereads the multi-sample input for
-every sample.  This can
+every sample.  This is grossly inefficient and can
 become a major bottleneck where there are many samples and/or the input
 is compressed.  For example, using "bcftools view" with optimal filtering
-options to merely decode one human chromosome BCF with
+options to decode one human chromosome BCF with
 137,977 samples and pipe the VCF output through "wc" took 12 hours on a
 fast server using 2 cores.  To split it into 137,977 single-sample VCFs
 would therefore require about 137,977 * 12 * 2 = ~3 million core-hours.
 This translates to 171 years on a single server or 125 days using 1000 cores
 on an HPC cluster, assuming file I/O is not a bottleneck with 1000 processes
-reading the same input file.
+reading the same input file.  ( The input would need to be prestaged on
+multiple local disks to avoid overloading the network file system. )
 
 .B vcf-split
 solves this problem by writing a large number of single-sample VCFs
-simultaneously during a single read of the multi-sample input.  The number
-of parallel output files is limited only by the open file limit of your
-system, which is typically at least in the tens of thousands on a modern
-Unix workstation or server.
+simultaneously during a single read of the multi-sample input.  Modern Unix
+systems support tens of thousands of simultaneously open files, providing
+a simple way to achieve enormous speedup.
 
-Hence, vcf-split may reduce the time required to split a large VCF by
-a factor of tens of thousands.
-
-The first-column and last-column arguments should be used to limit the
-number of open files if the number of samples exceeds your system's open
-file limit.  To minimize total run time, process as many samples as possible
-in each run to reduce the number of runs.  For example, if your system can
-handle 50,000 open files at once and you have a VCF with 100,000 samples,
-use two runs of 50,000 each rather than four runs of 25,000 columns each.
+To avoid system overload, vcf-split has a hard-coded limit of 10,000 samples
+at a time.  Hence, vcf-split may reduce the time required to split a large
+VCF by a factor of 10,000 and can process 137,977 samples in 14 passes.
 
 .B vcf-split
 is written entirely in C and attempts to optimize CPU, memory,
 and disk access.  It does not inhale large amounts of data into RAM, so memory
-use is trivial and it runs mostly from cache, making computational code
+use is trivial and it runs mostly in cache RAM, making computational code
 as fast as possible.
 
 The example BCF file mentioned above can be split in a few days on a single
-server using two cores and three runs of about 45,000 output files each.
+server using the maximum of 10,000 samples per run.
 
 .SH "SEE ALSO"
-ad2vcf, vcf2hap, haplohseq, vcfio
+ad2vcf, vcf2hap, haplohseq, biolibc
 
 .SH "EXAMPLES"
 
