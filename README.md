@@ -3,7 +3,8 @@ Split combined-sample VCF stream into single-sample VCF files.
 
 Traditional methods for splitting a multi-sample VCF stream into single-sample
 files involve a loop or parallel job that rereads the multi-sample input for
-each sample.  This can
+each sample, e.g. using "bcftools view --samples" to extract one sample at a
+time.  This can
 become a major bottleneck where there are many samples and/or the input
 is compressed.  For example, using "bcftools view" with optimal filtering
 options to merely decode one human chromosome BCF with
