@@ -14,10 +14,12 @@ This translates to 171 years on a single core or 125 days using 1000 cores
 on an HPC cluster.
 
 vcf-split solves this problem by writing a large number of single-sample VCFs
-simultaneously during a single read through the multi-sample input.  The number
-of parallel output files is limited only by the open file limit of your
-system, which is typically at least in the tens of thousands on a modern
-Unix-like system.
+simultaneously during a single read through the multi-sample input.  The
+number of parallel output files is theoretically limited only by the open file
+limit of your system, which is typically at least in the tens of thousands on
+a modern Unix-like system.  However, to prevent inadvertent system overloads,
+a limit of 10,000 samples is hard-coded as a constant.  You must edit the
+code and recompile to override this limit.
 
 vcf-split is written entirely in C and attempts to optimize CPU, memory,
 and disk access.  It does not inhale large amounts of data into RAM, so memory
