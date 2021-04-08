@@ -335,7 +335,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
-	 (vcf_read_static_fields(vcf_infile, &vcf_call) == VCF_OK) )
+	 (vcf_read_static_fields(vcf_infile, &vcf_call) == BIO_READ_OK) )
     {
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
