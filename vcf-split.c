@@ -33,6 +33,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <vcfio.h>
+#include <xtendc.h>
 #include "vcf-split.h"
 
 int     main(int argc,const char *argv[])
@@ -498,10 +499,6 @@ id_list_t   *read_selected_sample_ids(const char *argv[],
     }
     fclose(fp);
     
-    // List may already be sorted, so stay away from qsort, which has
-    // worst-case performance on presorted data
-    // List should not be huge, so minor issue here
-    // heapsort() is not portable, however
     qsort(list->ids, list->count, sizeof(char *),
 	(int (*)(const void *, const void *))strptrcmp);
     return list;
