@@ -88,7 +88,7 @@ RANLIB      ?= ranlib
 
 INCLUDES    += -I${LOCALBASE}/include
 CFLAGS      += ${INCLUDES}
-LDFLAGS     += -L${LOCALBASE}/lib -lbiolibc -lxtendc
+LDFLAGS     += -L${LOCALBASE}/lib -lbiolibc -lxtend
 
 ############################################################################
 # Assume first command in PATH.  Override with full pathnames if necessary.

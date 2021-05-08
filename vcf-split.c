@@ -33,7 +33,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <vcfio.h>
-#include <xtendc.h>
+#include <xtend.h>
 #include "vcf-split.h"
 
 int     main(int argc,const char *argv[])
