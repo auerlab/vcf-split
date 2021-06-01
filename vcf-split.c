@@ -32,8 +32,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <vcfio.h>
 #include <xtend.h>
+#include <biolibc/vcf.h>
 #include "vcf-split.h"
 
 int     main(int argc,const char *argv[])

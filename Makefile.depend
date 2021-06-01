@@ -1,6 +1,0 @@
-vcf-split.o: vcf-split.c ../local/include/vcfio.h \
-  ../local/include/dsvio.h ../local/include/biolibc.h \
-  ../local/include/biostring.h ../local/include/xtend.h \
-  ../local/include/xtend-protos.h vcf-split.h vcf-split-protos.h
-	${CC} -c ${CFLAGS} vcf-split.c
-
