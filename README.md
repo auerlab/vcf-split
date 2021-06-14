@@ -137,10 +137,10 @@ To facilitate incorporation into package managers, the Makefile respects
 standard make/environment variables such as CC, CFLAGS, PREFIX, etc.  
 
 Add-on libraries required for the build, such as biolibc, should be found
-under , which defaults to ../local.
+under ${LOCALBASE}, which defaults to ../local.
 The library, headers, and man pages are installed under
-.  DESTDIR is empty by default and is primarily used by
-package managers to stage installations.  PREFIX defaults to .
+${DESTDIR}${PREFIX}.  DESTDIR is empty by default and is primarily used by
+package managers to stage installations.  PREFIX defaults to ${LOCALBASE}.
 
 To install directly to /myprefix, assuming biolibc is installed there as well,
 using a make variable:
