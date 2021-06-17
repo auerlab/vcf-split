@@ -61,7 +61,10 @@ LOCALBASE   ?= ../local
 # Install in /usr/local, unless defined by the parent Makefile, the
 # environment, or a command line option such as PREFIX=/opt/local.
 PREFIX      ?= ${LOCALBASE}
+
+# Allow caller to override either MANPREFIX or MANDIR
 MANPREFIX   ?= ${PREFIX}
+MANDIR      ?= ${MANPREFIX}/man
 
 ############################################################################
 # Build flags
@@ -153,16 +156,16 @@ realclean: clean
 # Install all target files (binaries, libraries, docs, etc.)
 
 install: all
-	${MKDIR} -p ${DESTDIR}${PREFIX}/bin ${DESTDIR}${PREFIX}/man/man1
+	${MKDIR} -p ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANDIR}/man1
 	${INSTALL} -s -m 0555 ${BIN} ${DESTDIR}${PREFIX}/bin
-	${INSTALL} -m 0444 ${MAN} ${DESTDIR}${MANPREFIX}/man/man1
+	${INSTALL} -m 0444 ${MAN} ${DESTDIR}${MANDIR}/man1
 
 ############################################################################
 # Remove all installed files
 
 uninstall:
 	${RM} ${PREFIX}/bin/${BIN}
-	${RM} ${MANPREFIX}/man/man1/${MAN}
+	${RM} ${MANDIR}/man1/${MAN}
 
 help:
 	@printf "Usage: make [VARIABLE=value ...] all\n\n"
