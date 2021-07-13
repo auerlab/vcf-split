@@ -27,4 +27,3 @@ case $(uname) in
 esac
 
 make clean install
-ldd vcf-split
