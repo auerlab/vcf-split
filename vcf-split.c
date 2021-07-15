@@ -320,7 +320,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     size_t          c,
 		    field_len;
     int             delimiter;
-    static vcf_call_t      vcf_call = VCF_CALL_INIT;
+    static bl_vcf_t      vcf_call = VCF_CALL_INIT;
     char            *genotype;
     
     /*
@@ -336,7 +336,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
-	 (vcf_read_static_fields(vcf_infile, &vcf_call, VCF_FIELD_ALL) == BIO_READ_OK) )
+	 (vcf_read_static_fields(vcf_infile, &vcf_call, VCF_FIELD_ALL) == BL_READ_OK) )
     {
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
@@ -427,7 +427,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 
 
 void    dump_line(const char *argv[], const char *message, 
-		  vcf_call_t *vcf_call, size_t line_count, size_t col,
+		  bl_vcf_t *vcf_call, size_t line_count, size_t col,
 		  size_t first_col, const char *all_sample_ids[], char *genotype)
 
 {
