@@ -49,7 +49,7 @@ int     main(int argc,const char *argv[])
 		max_calls = SIZE_MAX,
 		next_arg = 1;
     flag_t      flags = 0;
-    vcf_field_mask_t    field_mask = VCF_FIELD_ALL;
+    vcf_field_mask_t    field_mask = BL_VCF_FIELD_ALL;
     
     next_arg = 1;
     while ( (next_arg < argc ) && (argv[next_arg][0] == '-') )
@@ -106,7 +106,7 @@ int     main(int argc,const char *argv[])
 	    ++next_arg;
 	    field_spec = (char *)argv[next_arg++];
 	    if ( (field_mask = vcf_parse_field_spec(field_spec))
-		    == VCF_FIELD_ERROR )
+		    == BL_VCF_FIELD_ERROR )
 		usage(argv);
 	}
 	
@@ -320,7 +320,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     size_t          c,
 		    field_len;
     int             delimiter;
-    static bl_vcf_t      vcf_call = VCF_CALL_INIT;
+    static bl_vcf_t      vcf_call = BL_VCF_CALL_INIT;
     char            *genotype;
     
     /*
@@ -329,20 +329,20 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     
     /* Declared as static: Allocate only once and reuse */
     if ( vcf_call.single_sample == NULL )
-	vcf_call_init(&vcf_call, VCF_INFO_MAX_CHARS, VCF_FORMAT_MAX_CHARS,
-		  VCF_SAMPLE_MAX_CHARS);
+	vcf_call_init(&vcf_call, BL_VCF_INFO_MAX_CHARS, BL_VCF_FORMAT_MAX_CHARS,
+		  BL_VCF_SAMPLE_MAX_CHARS);
     genotype = vcf_call.single_sample;
     
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
-	 (vcf_read_static_fields(vcf_infile, &vcf_call, VCF_FIELD_ALL) == BL_READ_OK) )
+	 (vcf_read_static_fields(vcf_infile, &vcf_call, BL_VCF_FIELD_ALL) == BL_READ_OK) )
     {
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
 	
-	if ( VCF_INFO_LEN(&vcf_call) > max_info_len )
-	    max_info_len = VCF_INFO_LEN(&vcf_call);
+	if ( BL_VCF_INFO_LEN(&vcf_call) > max_info_len )
+	    max_info_len = BL_VCF_INFO_LEN(&vcf_call);
 	
 	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
@@ -366,7 +366,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	
 	for (; (c <= last_col) && 
 	       (delimiter = tsv_read_field(vcf_infile, genotype,
-				VCF_SAMPLE_MAX_CHARS, &field_len)) != '\n';
+				BL_VCF_SAMPLE_MAX_CHARS, &field_len)) != '\n';
 				++c)
 	{
 	    if ( delimiter == EOF )
@@ -388,9 +388,9 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		    /*
 		    fprintf(vcf_outfiles[c - first_col],
 			    "%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-			    VCF_CHROMOSOME(&vcf_call), VCF_POS_STR(&vcf_call),
-			    VCF_ID(&vcf_call), VCF_REF(&vcf_call),
-			    VCF_ALT(&vcf_call), VCF_FORMAT(&vcf_call),
+			    BL_VCF_CHROMOSOME(&vcf_call), BL_VCF_POS_STR(&vcf_call),
+			    BL_VCF_ID(&vcf_call), BL_VCF_REF(&vcf_call),
+			    BL_VCF_ALT(&vcf_call), BL_VCF_FORMAT(&vcf_call),
 			    genotype);
 		    */
 		}
@@ -435,10 +435,10 @@ void    dump_line(const char *argv[], const char *message,
     fprintf(stderr, "Input line: %zu\n", line_count);
     fprintf(stderr, "Column: %zu Sample ID: %s:\n",
 	    col, all_sample_ids[col - first_col]);
-    fprintf(stderr, "SS VCF: %s\t%s\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-	    VCF_CHROMOSOME(vcf_call), VCF_POS_STR(vcf_call),
-	    VCF_REF(vcf_call), VCF_ALT(vcf_call),
-	    VCF_FORMAT(vcf_call), genotype);
+    fprintf(stderr, "SS VCF: %s\t%" PRIu64 "\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
+	    BL_VCF_CHROMOSOME(vcf_call), BL_VCF_POS(vcf_call),
+	    BL_VCF_REF(vcf_call), BL_VCF_ALT(vcf_call),
+	    BL_VCF_FORMAT(vcf_call), genotype);
 }
 
 
