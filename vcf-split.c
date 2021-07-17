@@ -105,7 +105,7 @@ int     main(int argc,const char *argv[])
 	{
 	    ++next_arg;
 	    field_spec = (char *)argv[next_arg++];
-	    if ( (field_mask = vcf_parse_field_spec(field_spec))
+	    if ( (field_mask = bl_vcf_parse_field_spec(field_spec))
 		    == BL_VCF_FIELD_ERROR )
 		usage(argv);
 	}
@@ -171,8 +171,8 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
     // Input is likely to come from "bcftools view" stdout.
     // What is optimal buffering for a Unix pipe?  Benchmark several values.
     setvbuf(vcf_infile, inbuf, _IOFBF, BUFF_SIZE);
-    header_stream = vcf_skip_header(vcf_infile);
-    vcf_get_sample_ids(vcf_infile, all_sample_ids, first_col, last_col);
+    header_stream = bl_vcf_skip_header(vcf_infile);
+    bl_vcf_get_sample_ids(vcf_infile, all_sample_ids, first_col, last_col);
 
     /*
     fputs("All sample IDs:", stderr);
@@ -329,14 +329,14 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     
     /* Declared as static: Allocate only once and reuse */
     if ( vcf_call.single_sample == NULL )
-	vcf_call_init(&vcf_call, BL_VCF_INFO_MAX_CHARS, BL_VCF_FORMAT_MAX_CHARS,
+	bl_vcf_call_init(&vcf_call, BL_VCF_INFO_MAX_CHARS, BL_VCF_FORMAT_MAX_CHARS,
 		  BL_VCF_SAMPLE_MAX_CHARS);
     genotype = vcf_call.single_sample;
     
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
-	 (vcf_read_static_fields(vcf_infile, &vcf_call, BL_VCF_FIELD_ALL) == BL_READ_OK) )
+	 (bl_vcf_read_static_fields(vcf_infile, &vcf_call, BL_VCF_FIELD_ALL) == BL_READ_OK) )
     {
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
@@ -383,7 +383,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		     ((flags == FLAG_ALT) &&
 		      ((genotype[0] == '1') || (genotype[2] == '1'))) )
 		{
-		    vcf_write_ss_call(vcf_outfiles[c - first_col],
+		    bl_vcf_write_ss_call(vcf_outfiles[c - first_col],
 					    &vcf_call, field_mask);
 		    /*
 		    fprintf(vcf_outfiles[c - first_col],
