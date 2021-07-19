@@ -388,7 +388,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		    /*
 		    fprintf(vcf_outfiles[c - first_col],
 			    "%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-			    BL_VCF_CHROMOSOME(&vcf_call), BL_VCF_POS_STR(&vcf_call),
+			    BL_VCF_CHROM(&vcf_call), BL_VCF_POS_STR(&vcf_call),
 			    BL_VCF_ID(&vcf_call), BL_VCF_REF(&vcf_call),
 			    BL_VCF_ALT(&vcf_call), BL_VCF_FORMAT(&vcf_call),
 			    genotype);
@@ -436,7 +436,7 @@ void    dump_line(const char *argv[], const char *message,
     fprintf(stderr, "Column: %zu Sample ID: %s:\n",
 	    col, all_sample_ids[col - first_col]);
     fprintf(stderr, "SS VCF: %s\t%" PRIu64 "\t.\t%s\t%s\t.\t.\t.\t%s\t%s\n",
-	    BL_VCF_CHROMOSOME(vcf_call), BL_VCF_POS(vcf_call),
+	    BL_VCF_CHROM(vcf_call), BL_VCF_POS(vcf_call),
 	    BL_VCF_REF(vcf_call), BL_VCF_ALT(vcf_call),
 	    BL_VCF_FORMAT(vcf_call), genotype);
 }
