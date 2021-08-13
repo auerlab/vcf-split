@@ -32,7 +32,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <xtend.h>
+#include <xtend/dsv.h>
 #include <biolibc/vcf.h>
 #include "vcf-split.h"
 
