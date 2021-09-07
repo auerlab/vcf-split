@@ -319,7 +319,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		    max_info_len = 0;
     size_t          c,
 		    field_len;
-    int             delimiter;
+    int             delimiter = ' ';    // Silence false uninit warning
     static bl_vcf_t vcf_call;  // Use bl_vcf_init() function to initialize
     char            *genotype;
     
