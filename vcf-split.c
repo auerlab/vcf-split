@@ -33,10 +33,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <xtend/dsv.h>
+#include <xtend/string.h>
 #include <biolibc/vcf.h>
 #include "vcf-split.h"
 
-int     main(int argc,const char *argv[])
+int     main(int argc, char *argv[])
 
 {
     char        *field_spec,
@@ -104,7 +105,7 @@ int     main(int argc,const char *argv[])
 	else if ( strcmp(argv[next_arg], "--output-fields") == 0 )
 	{
 	    ++next_arg;
-	    field_spec = (char *)argv[next_arg++];
+	    field_spec = argv[next_arg++];
 	    if ( (field_mask = bl_vcf_parse_field_spec(field_spec))
 		    == BL_VCF_FIELD_ERROR )
 		usage(argv);
@@ -155,7 +156,7 @@ int     main(int argc,const char *argv[])
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-int     vcf_split(const char *argv[], FILE *vcf_infile,
+int     vcf_split(char *argv[], FILE *vcf_infile,
 		  const char *outfile_prefix,
 		  size_t first_col, size_t last_col,
 		  id_list_t *selected_sample_ids, size_t max_calls,
@@ -212,7 +213,7 @@ int     vcf_split(const char *argv[], FILE *vcf_infile,
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-void    write_output_files(const char *argv[], FILE *vcf_infile, FILE *header,
+void    write_output_files(char *argv[], FILE *vcf_infile, FILE *header,
 			    const char *all_sample_ids[], bool selected[],
 			    const char *outfile_prefix,
 			    size_t first_col, size_t last_col,
@@ -309,7 +310,7 @@ void    write_output_files(const char *argv[], FILE *vcf_infile, FILE *header,
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
+int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		   const char *all_sample_ids[], bool selected[],
 		   size_t first_col, size_t last_col, size_t max_calls,
 		   flag_t flags, vcf_field_mask_t field_mask)
@@ -329,8 +330,8 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     
     /* Declared as static: Allocate only once and reuse */
     if ( vcf_call.single_sample == NULL )
-	bl_vcf_init(&vcf_call, BL_VCF_INFO_MAX_CHARS, BL_VCF_FORMAT_MAX_CHARS,
-		  BL_VCF_SAMPLE_MAX_CHARS);
+	bl_vcf_init(&vcf_call, VCF_INFO_MAX_CHARS, VCF_FORMAT_MAX_CHARS,
+		  VCF_SAMPLE_MAX_CHARS);
     genotype = vcf_call.single_sample;
     
     // Check max_calls here rather than outside in order to print the
@@ -366,7 +367,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	
 	for (; (c <= last_col) && 
 	       (delimiter = tsv_read_field(vcf_infile, genotype,
-				BL_VCF_SAMPLE_MAX_CHARS, &field_len)) != '\n';
+				VCF_SAMPLE_MAX_CHARS, &field_len)) != '\n';
 				++c)
 	{
 	    if ( delimiter == EOF )
@@ -426,7 +427,7 @@ int     split_line(const char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 }
 
 
-void    dump_line(const char *argv[], const char *message, 
+void    dump_line(char *argv[], const char *message, 
 		  bl_vcf_t *vcf_call, size_t line_count, size_t col,
 		  size_t first_col, const char *all_sample_ids[], char *genotype)
 
@@ -451,13 +452,13 @@ void    dump_line(const char *argv[], const char *message,
  *  2019-12-20  Jason Bacon Begin
  ***************************************************************************/
 
-id_list_t   *read_selected_sample_ids(const char *argv[],
+id_list_t   *read_selected_sample_ids(char *argv[],
 				      const char *samples_file)
 
 {
     id_list_t   *list;
     size_t      c;
-    char        temp_id[SAMPLE_ID_MAX + 1];
+    char        temp_id[BL_VCF_ID_MAX_CHARS + 1];
     FILE        *fp;
     
     if ( (fp = fopen(samples_file, "r")) == NULL )
@@ -478,7 +479,7 @@ id_list_t   *read_selected_sample_ids(const char *argv[],
      *  IDS, do one malloc(), rewind and read again.
      */
 
-    for (list->count = 0; read_string(fp, temp_id, SAMPLE_ID_MAX) > 0; ++list->count )
+    for (list->count = 0; read_string(fp, temp_id, BL_VCF_ID_MAX_CHARS) > 0; ++list->count )
 	;
     
     if ( (list->ids = (char **)malloc(list->count * sizeof(char **))) == NULL )
@@ -490,7 +491,7 @@ id_list_t   *read_selected_sample_ids(const char *argv[],
     rewind(fp);
     for (c = 0; c < list->count; ++c)
     {
-	read_string(fp, temp_id, SAMPLE_ID_MAX);
+	read_string(fp, temp_id, BL_VCF_ID_MAX_CHARS);
 	if ( (list->ids[c] = strdup(temp_id)) == NULL )
 	{
 	    fprintf(stderr, "%s: Cannot allocate sample id %zu.\n", argv[0], c);
@@ -536,7 +537,7 @@ size_t  read_string(FILE *fp, char *buff, size_t maxlen)
 }
 
 
-void    usage(const char *argv[])
+void    usage(char *argv[])
 
 {
     fprintf(stderr, "\nUsage: %s\n\t[--het-only]\n\t[--alt-only]\n\t"

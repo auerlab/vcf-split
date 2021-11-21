@@ -4,14 +4,13 @@
 
 #define BUFF_SIZE           1024*1024
 #define MAX_OUTFILES        10000
-#define SAMPLE_ID_MAX       256         // Use only for temp variables
 #define CMD_MAX             128
 
 // Match these with ad2vcf
 // Yes, we actually saw a few INFO fields over 512k in some dbGap BCFs
-#define BL_VCF_INFO_MAX_CHARS          1048576
-#define BL_VCF_FORMAT_MAX_CHARS        4096
-#define BL_VCF_SAMPLE_MAX_CHARS        2048
+#define VCF_INFO_MAX_CHARS          1048576
+#define VCF_FORMAT_MAX_CHARS        4096
+#define VCF_SAMPLE_MAX_CHARS        2048
 
 // FIXME: Encapsulate this and move to biolibc?
 typedef struct
