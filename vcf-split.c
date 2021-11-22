@@ -50,6 +50,7 @@ int     main(int argc, char *argv[])
 		max_calls = SIZE_MAX,
 		next_arg = 1;
     flag_t      flags = 0;
+    // Overridden if specified on command line
     vcf_field_mask_t    field_mask = BL_VCF_FIELD_ALL;
     
     next_arg = 1;
@@ -102,7 +103,7 @@ int     main(int argc, char *argv[])
 	    ++next_arg;
 	}
 
-	else if ( strcmp(argv[next_arg], "--output-fields") == 0 )
+	else if ( strcmp(argv[next_arg], "--fields") == 0 )
 	{
 	    ++next_arg;
 	    field_spec = argv[next_arg++];
@@ -337,7 +338,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
-	 (bl_vcf_read_static_fields(vcf_infile, &vcf_call, BL_VCF_FIELD_ALL) == BL_READ_OK) )
+	 (bl_vcf_read_static_fields(vcf_infile, &vcf_call, field_mask) == BL_READ_OK) )
     {
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
@@ -367,16 +368,9 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	
 	for (; (c <= last_col) && 
 	       (delimiter = tsv_read_field(vcf_infile, genotype,
-				VCF_SAMPLE_MAX_CHARS, &field_len)) != '\n';
+				VCF_SAMPLE_MAX_CHARS, &field_len)) != EOF;
 				++c)
 	{
-	    if ( delimiter == EOF )
-	    {
-		dump_line(argv, "split_line(): Encountered EOF while reading genotype fields.\n",
-			  &vcf_call, line_count, c, first_col, all_sample_ids,
-			  genotype);
-		exit(EX_DATAERR);
-	    }
 	    if ( selected[c - first_col] )
 	    {
 		if ( (flags == FLAG_NONE) ||
@@ -385,7 +379,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		      ((genotype[0] == '1') || (genotype[2] == '1'))) )
 		{
 		    bl_vcf_write_ss_call(vcf_outfiles[c - first_col],
-					    &vcf_call, field_mask);
+					    &vcf_call, BL_VCF_FIELD_ALL);
 		    /*
 		    fprintf(vcf_outfiles[c - first_col],
 			    "%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\n",
@@ -397,7 +391,16 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		}
 	    }
 	}
-	if ( c < last_col )
+	
+	if ( delimiter == EOF )
+	{
+	    dump_line(argv, "split_line(): Encountered EOF while reading genotype fields.\n",
+		      &vcf_call, line_count, c, first_col, all_sample_ids,
+		      genotype);
+	    exit(EX_DATAERR);
+	}
+
+	if ( (delimiter == '\n') && (c < last_col) )
 	{
 	    fprintf(stderr, "%s: split_line(): Reached EOL before last_col.\n", argv[0]);
 	    fprintf(stderr, "Does your input really have %zu samples?\n", last_col);
@@ -542,7 +545,7 @@ void    usage(char *argv[])
 {
     fprintf(stderr, "\nUsage: %s\n\t[--het-only]\n\t[--alt-only]\n\t"
 		    "[--max-calls N]\n\t[--sample-id-file file]\n\t"
-		    "[--output-fields field-spec]\n\toutput-file-prefix\n\t"
+		    "[--fields field-spec]\n\toutput-file-prefix\n\t"
 		    "first-column\n\tlast-column\n\n", argv[0]);
     fputs("Press return to continue...", stderr);
     getchar();

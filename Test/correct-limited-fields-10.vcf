@@ -1,0 +1,12 @@
+##fileformat=VCFv4.2
+#CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	SAMPLE
+chr2	21130	.	AC	A	.	.	.	GT	0|0
+chr2	21151	.	C	G	.	.	.	GT	0|0
+chr2	21224	.	C	G	.	.	.	GT	0|0
+chr2	21226	.	C	T	.	.	.	GT	0|0
+chr2	21251	.	C	A	.	.	.	GT	0|0
+chr2	21311	.	C	A	.	.	.	GT	0|0
+chr2	21354	.	C	A	.	.	.	GT	0|0
+chr2	21370	.	AC	A	.	.	.	GT	0|0
+chr2	21467	.	C	T	.	.	.	GT	0|0
+chr2	21493	.	T	A	.	.	.	GT	0|0
