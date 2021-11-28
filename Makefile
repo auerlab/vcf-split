@@ -91,6 +91,7 @@ RANLIB      ?= ranlib
 
 INCLUDES    += -I${LOCALBASE}/include
 CFLAGS      += ${INCLUDES}
+CFLAGS      += -DVERSION=\"`cat version.txt`\"
 LDFLAGS     += -L${LOCALBASE}/lib -lbiolibc -lxtend
 
 ############################################################################
@@ -113,7 +114,12 @@ INSTALL ?= install
 ############################################################################
 # Standard targets required by package managers
 
-all:    ${BIN}
+.PHONY: all depend clean realclean install install-strip help version.txt
+
+all:    ${BIN} version.txt
+
+version.txt:
+	test -e .git && git describe --tags > version.txt || true
 
 ${BIN}: ${OBJS}
 	${LD} -o ${BIN} ${OBJS} ${LDFLAGS}
@@ -159,13 +165,6 @@ install: all
 	${MKDIR} -p ${DESTDIR}${PREFIX}/bin ${DESTDIR}${MANDIR}/man1
 	${INSTALL} -s -m 0555 ${BIN} ${DESTDIR}${PREFIX}/bin
 	${INSTALL} -m 0444 ${MAN} ${DESTDIR}${MANDIR}/man1
-
-############################################################################
-# Remove all installed files
-
-uninstall:
-	${RM} ${PREFIX}/bin/${BIN}
-	${RM} ${MANDIR}/man1/${MAN}
 
 help:
 	@printf "Usage: make [VARIABLE=value ...] all\n\n"

@@ -53,6 +53,12 @@ int     main(int argc, char *argv[])
     // Overridden if specified on command line
     vcf_field_mask_t    field_mask = BL_VCF_FIELD_ALL;
     
+    if ( (argc == 2) && (strcmp(argv[next_arg],"--version")) == 0 )
+    {
+	printf("%s\n", VERSION);
+	return EX_OK;
+    }
+    
     next_arg = 1;
     while ( (next_arg < argc ) && (argv[next_arg][0] == '-') )
     {
@@ -97,7 +103,7 @@ int     main(int argc, char *argv[])
 		fprintf(stderr,
 		    "%s: --het-only and --alt-only are mutually exclusive.\n",
 		    argv[0]);
-		exit(EX_USAGE);
+		usage(argv);
 	    }
 	    flags |= FLAG_ALT;
 	    ++next_arg;
@@ -362,7 +368,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		fprintf(stderr, "%s: split_line(): Reached EOL before first_col.\n", argv[0]);
 		fprintf(stderr, "Does your input really have %zu samples?\n",
 			first_col);
-		exit(EX_USAGE);
+		usage(argv);
 	    }
 	}
 	
@@ -404,7 +410,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	{
 	    fprintf(stderr, "%s: split_line(): Reached EOL before last_col.\n", argv[0]);
 	    fprintf(stderr, "Does your input really have %zu samples?\n", last_col);
-	    exit(EX_USAGE);
+	    usage(argv);
 	}
 
 	// If this wasn't the last sample in the line, skip to EOL
@@ -543,6 +549,7 @@ size_t  read_string(FILE *fp, char *buff, size_t maxlen)
 void    usage(char *argv[])
 
 {
+    fprintf(stderr, "\nUsage: %s\n\t[--version]\n", argv[0]);
     fprintf(stderr, "\nUsage: %s\n\t[--het-only]\n\t[--alt-only]\n\t"
 		    "[--max-calls N]\n\t[--sample-id-file file]\n\t"
 		    "[--fields field-spec]\n\toutput-file-prefix\n\t"
@@ -606,6 +613,6 @@ void    tag_selected_columns(char *all_sample_ids[],
 		"and you want to bludgeon your system.  Otherwise, you can process the\n"
 		"multi-sample input file in %u-sample chunks.\n",
 		MAX_OUTFILES, total_selected, MAX_OUTFILES, MAX_OUTFILES);
-	exit(EX_USAGE);
+	exit(EX_SOFTWARE);
     }
 }
