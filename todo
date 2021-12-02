@@ -1,4 +1,6 @@
 
+Replace SAMPLE in header with actual sample ID
+
 Error out if input files are not sorted
 
 Output VCF header
