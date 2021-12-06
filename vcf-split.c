@@ -53,9 +53,9 @@ int     main(int argc, char *argv[])
     // Overridden if specified on command line
     vcf_field_mask_t    field_mask = BL_VCF_FIELD_ALL;
     
-    if ( (argc == 2) && (strcmp(argv[next_arg],"--version")) == 0 )
+    if ( (argc == 2) && (strcmp(argv[1],"--version")) == 0 )
     {
-	printf("%s\n", VERSION);
+	printf("vcf-split %s\n", VERSION);
 	return EX_OK;
     }
     
