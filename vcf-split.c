@@ -47,8 +47,8 @@ int     main(int argc, char *argv[])
     id_list_t   *selected_sample_ids = NULL;
     size_t      first_col,
 		last_col,
-		max_calls = SIZE_MAX,
-		next_arg = 1;
+		max_calls = SIZE_MAX;
+    int         next_arg = 1;
     flag_t      flags = 0;
     // Overridden if specified on command line
     vcf_field_mask_t    field_mask = BL_VCF_FIELD_ALL;
@@ -121,7 +121,7 @@ int     main(int argc, char *argv[])
 	else
 	    usage(argv);
     }
-    
+
     if ( next_arg > argc - 3 )
 	usage(argv);
 
@@ -174,12 +174,13 @@ int     vcf_split(char *argv[], FILE *vcf_infile,
 	    *all_sample_ids[last_col - first_col + 1];
     bool    selected[last_col - first_col + 1];
     size_t  c;
-    FILE    *header_stream;
+    FILE    *meta_stream;
     
     // Input is likely to come from "bcftools view" stdout.
     // What is optimal buffering for a Unix pipe?  Benchmark several values.
     setvbuf(vcf_infile, inbuf, _IOFBF, BUFF_SIZE);
-    header_stream = bl_vcf_skip_header(vcf_infile);
+    if ( bl_vcf_skip_meta_data(vcf_infile, &meta_stream) != BL_READ_OK )
+	exit(EX_DATAERR);
     bl_vcf_get_sample_ids(vcf_infile, all_sample_ids, first_col, last_col);
 
     /*
@@ -200,7 +201,7 @@ int     vcf_split(char *argv[], FILE *vcf_infile,
 	fputc('\n', stderr);
     }
     
-    write_output_files(argv, vcf_infile, header_stream, 
+    write_output_files(argv, vcf_infile, meta_stream, 
 		       (const char **)all_sample_ids,
 		       selected, outfile_prefix,
 		       first_col, last_col, max_calls, flags, field_mask);

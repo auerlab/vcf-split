@@ -119,7 +119,7 @@ INSTALL ?= install
 all:    ${BIN} version.txt
 
 version.txt:
-	test -e .git && git describe --tags > version.txt || true
+	test -e .git && ./git-version.sh > version.txt || true
 
 ${BIN}: ${OBJS}
 	${LD} -o ${BIN} ${OBJS} ${LDFLAGS}
