@@ -91,7 +91,7 @@ RANLIB      ?= ranlib
 
 INCLUDES    += -I${LOCALBASE}/include
 CFLAGS      += ${INCLUDES}
-CFLAGS      += -DVERSION=\"`cat version.txt`\"
+CFLAGS      += -DVERSION=\"`./version.sh`\"
 LDFLAGS     += -L${LOCALBASE}/lib -lbiolibc -lxtend
 
 ############################################################################
@@ -114,12 +114,9 @@ INSTALL ?= install
 ############################################################################
 # Standard targets required by package managers
 
-.PHONY: all depend clean realclean install install-strip help version.txt
+.PHONY: all depend clean realclean install install-strip help
 
-all:    ${BIN} version.txt
-
-version.txt:
-	test -e .git && ./git-version.sh > version.txt || true
+all:    ${BIN}
 
 ${BIN}: ${OBJS}
 	${LD} -o ${BIN} ${OBJS} ${LDFLAGS}
