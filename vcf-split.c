@@ -345,7 +345,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
-	 (bl_vcf_read_static_fields(vcf_infile, &vcf_call, field_mask) == BL_READ_OK) )
+	 (bl_vcf_read_static_fields(&vcf_call, vcf_infile, field_mask) == BL_READ_OK) )
     {
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
@@ -385,8 +385,8 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		     ((flags == FLAG_ALT) &&
 		      ((genotype[0] == '1') || (genotype[2] == '1'))) )
 		{
-		    bl_vcf_write_ss_call(vcf_outfiles[c - first_col],
-					    &vcf_call, BL_VCF_FIELD_ALL);
+		    bl_vcf_write_ss_call(&vcf_call,
+			vcf_outfiles[c - first_col],BL_VCF_FIELD_ALL);
 		    /*
 		    fprintf(vcf_outfiles[c - first_col],
 			    "%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\n",
