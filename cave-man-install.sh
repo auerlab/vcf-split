@@ -21,7 +21,7 @@ case $(uname) in
 *)
     export CFLAGS="-Wall -g -O"
     LIBDIR=$(realpath $LOCALBASE/lib)
-    export LDFLAGS="-L$LIBDIR -Wl,-rpath,$LIBDIR:/usr/lib:/lib"
+    export LDFLAGS="-L. -L$LIBDIR -Wl,-rpath,$LIBDIR:/usr/lib:/lib"
     ;;
 
 esac
