@@ -89,7 +89,7 @@ CPP         ?= cpp
 AR          ?= ar
 RANLIB      ?= ranlib
 
-INCLUDES    += -I${LOCALBASE}/include
+INCLUDES    += -isystem ${LOCALBASE}/include
 CFLAGS      += ${INCLUDES}
 CFLAGS      += -DVERSION=\"`./version.sh`\"
 LDFLAGS     += -L${LOCALBASE}/lib -lbiolibc -lxtend
