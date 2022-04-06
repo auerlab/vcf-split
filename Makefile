@@ -91,10 +91,10 @@ CPP         ?= cpp
 AR          ?= ar
 RANLIB      ?= ranlib
 
-INCLUDES    += -isystem ${LOCALBASE}/include
+INCLUDES    += -isystem ${PREFIX}/include -isystem ${LOCALBASE}/include
 CFLAGS      += ${INCLUDES}
 CFLAGS      += -DVERSION=\"`./version.sh`\"
-LDFLAGS     += -L${LOCALBASE}/lib -lbiolibc -lxtend
+LDFLAGS     += -L${PREFIX}/lib -L${LOCALBASE}/lib -lbiolibc -lxtend
 
 ############################################################################
 # Assume first command in PATH.  Override with full pathnames if necessary.
