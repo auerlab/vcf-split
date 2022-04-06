@@ -356,7 +356,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
 	{
-	    delimiter = tsv_skip_field(vcf_infile);
+	    delimiter = tsv_skip_field(vcf_infile, &field_len);
 	    if ( delimiter == EOF )
 	    {
 		dump_line(argv, "split_line(): Hit EOF skipping fields before first_col.\n",
