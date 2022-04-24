@@ -179,7 +179,7 @@ int     vcf_split(char *argv[], FILE *vcf_infile,
     // Input is likely to come from "bcftools view" stdout.
     // What is optimal buffering for a Unix pipe?  Benchmark several values.
     setvbuf(vcf_infile, inbuf, _IOFBF, BUFF_SIZE);
-    if ( bl_vcf_skip_meta_data(vcf_infile, &meta_stream) != BL_READ_OK )
+    if ( (meta_stream = bl_vcf_skip_meta_data(vcf_infile)) == NULL )
 	exit(EX_DATAERR);
     bl_vcf_get_sample_ids(vcf_infile, all_sample_ids, first_col, last_col);
 
@@ -326,27 +326,28 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 {
     static size_t   line_count = 0,
 		    max_info_len = 0;
-    size_t          c,
-		    field_len;
-    int             delimiter = ' ';    // Silence false uninit warning
-    static bl_vcf_t vcf_call;  // Use bl_vcf_init() function to initialize
+    size_t          c, field_len, col_index;
+    int             delimiter = ' ';        // Silence false uninit warning
+    static bl_vcf_t vcf_call;
     char            *genotype;
+    static size_t   genotype_array_size = 0;    // Reuse allocated buffer
     
     /*
      *  Read in VCF fields
      */
     
-    /* Declared as static: Allocate only once and reuse */
-    if ( vcf_call.single_sample == NULL )
-	bl_vcf_init(&vcf_call, VCF_INFO_MAX_CHARS, VCF_FORMAT_MAX_CHARS,
-		  VCF_SAMPLE_MAX_CHARS);
-    genotype = vcf_call.single_sample;
+    /* Declared as static: Initialize only once and reuse */
+    if ( genotype_array_size == 0 )
+	bl_vcf_init(&vcf_call);
     
     // Check max_calls here rather than outside in order to print the
     // end-of-run report below
     if ( (line_count < max_calls) && 
-	 (bl_vcf_read_static_fields(&vcf_call, vcf_infile, field_mask) == BL_READ_OK) )
+	 (bl_vcf_read_static_fields(&vcf_call, vcf_infile, field_mask)
+	    == BL_READ_OK) )
     {
+	// Debug bl_vcf_write_static_fields(&vcf_call, stderr, field_mask);
+	
 	if ( (++line_count % 100 == 0) && isatty(fileno(stderr)) )
 	    fprintf(stderr, "%zu\r", line_count);
 	
@@ -374,21 +375,24 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	}
 	
 	for (; (c <= last_col) && 
-	       (delimiter = tsv_read_field(vcf_infile, genotype,
-				VCF_SAMPLE_MAX_CHARS, &field_len)) != EOF;
+	       (delimiter = tsv_read_field_malloc(vcf_infile, &genotype,
+				&genotype_array_size, &field_len)) != EOF;
 				++c)
 	{
-	    if ( selected[c - first_col] )
+	    col_index = c - first_col;
+	    if ( selected[col_index] )
 	    {
+		// FIXME: Should this be flags & FLAG_*
 		if ( (flags == FLAG_NONE) ||
 		     ((flags == FLAG_HET) && (genotype[0] != genotype[2])) ||
 		     ((flags == FLAG_ALT) &&
 		      ((genotype[0] == '1') || (genotype[2] == '1'))) )
 		{
-		    bl_vcf_write_ss_call(&vcf_call,
-			vcf_outfiles[c - first_col],BL_VCF_FIELD_ALL);
+		    bl_vcf_write_static_fields(&vcf_call,
+			vcf_outfiles[col_index], BL_VCF_FIELD_ALL);
+		    fprintf(vcf_outfiles[col_index], "%s\n", genotype);
 		    /*
-		    fprintf(vcf_outfiles[c - first_col],
+		    fprintf(vcf_outfiles[col_index],
 			    "%s\t%s\t%s\t%s\t%s\t.\t.\t.\t%s\t%s\n",
 			    BL_VCF_CHROM(&vcf_call), BL_VCF_POS_STR(&vcf_call),
 			    BL_VCF_ID(&vcf_call), BL_VCF_REF(&vcf_call),
@@ -582,8 +586,7 @@ void    tag_selected_columns(char *all_sample_ids[],
 			     size_t first_col, size_t last_col)
 
 {
-    size_t  c,
-	    total_selected;
+    size_t  c, total_selected;
     
     // No --sample-id-file, select all samples
     if ( selected_sample_ids == NULL )
