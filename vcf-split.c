@@ -472,7 +472,7 @@ id_list_t   *read_selected_sample_ids(char *argv[],
 {
     id_list_t   *list;
     size_t      c;
-    char        temp_id[BL_VCF_ID_MAX_CHARS + 1];
+    char        temp_id[BL_VCF_SAMPLE_ID_MAX_CHARS + 1];
     FILE        *fp;
     
     if ( (fp = fopen(samples_file, "r")) == NULL )
@@ -493,7 +493,7 @@ id_list_t   *read_selected_sample_ids(char *argv[],
      *  IDS, do one malloc(), rewind and read again.
      */
 
-    for (list->count = 0; read_string(fp, temp_id, BL_VCF_ID_MAX_CHARS) > 0; ++list->count )
+    for (list->count = 0; read_string(fp, temp_id, BL_VCF_SAMPLE_ID_MAX_CHARS) > 0; ++list->count )
 	;
     
     if ( (list->ids = (char **)malloc(list->count * sizeof(char **))) == NULL )
@@ -505,7 +505,7 @@ id_list_t   *read_selected_sample_ids(char *argv[],
     rewind(fp);
     for (c = 0; c < list->count; ++c)
     {
-	read_string(fp, temp_id, BL_VCF_ID_MAX_CHARS);
+	read_string(fp, temp_id, BL_VCF_SAMPLE_ID_MAX_CHARS);
 	if ( (list->ids[c] = strdup(temp_id)) == NULL )
 	{
 	    fprintf(stderr, "%s: Cannot allocate sample id %zu.\n", argv[0], c);
