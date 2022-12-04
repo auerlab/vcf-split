@@ -137,7 +137,7 @@ Community support for pkgsrc is available through the
 
 ### Building vcf-split locally
 
-Below are cave man install instructions for development purposes, not
+Below are caveman install instructions for development purposes, not
 recommended for regular use.
 
 vcf-split depends on [biolibc](https://github.com/auerlab/biolibc).
