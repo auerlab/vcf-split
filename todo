@@ -1,4 +1,6 @@
 
+Replace array buffering with temp file seek
+
 Replace SAMPLE in header with actual sample ID
 
 Error out if input files are not sorted
