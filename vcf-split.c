@@ -274,7 +274,7 @@ void    write_output_files(char *argv[], FILE *vcf_infile, FILE *header,
     }
 
     // Heart of the program, split each VCF line across multiple files
-    for (c = 0; split_line(argv, vcf_infile, vcf_outfiles, all_sample_ids,
+    for (c = 0; xt_split_line(argv, vcf_infile, vcf_outfiles, all_sample_ids,
 			   selected, first_col, last_col, max_calls, flags,
 			   field_mask);
 			   ++c)
@@ -318,7 +318,7 @@ void    write_output_files(char *argv[], FILE *vcf_infile, FILE *header,
  *  2019-12-06  Jason Bacon Begin
  ***************************************************************************/
 
-int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
+int     xt_split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 		   const char *all_sample_ids[], bool selected[],
 		   size_t first_col, size_t last_col, size_t max_calls,
 		   flag_t flags, vcf_field_mask_t field_mask)
@@ -357,17 +357,17 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	// Skip columns before first_col
 	for (c = 1; c < first_col; ++c)
 	{
-	    delimiter = tsv_skip_field(vcf_infile, &field_len);
+	    delimiter = xt_tsv_skip_field(vcf_infile, &field_len);
 	    if ( delimiter == EOF )
 	    {
-		dump_line(argv, "split_line(): Hit EOF skipping fields before first_col.\n",
+		dump_line(argv, "xt_split_line(): Hit EOF skipping fields before first_col.\n",
 			  &vcf_call, line_count, c, first_col, all_sample_ids,
 			  "Genotype not relevant");
 		exit(EX_DATAERR);
 	    }
 	    else if ( delimiter == '\n' )
 	    {
-		fprintf(stderr, "%s: split_line(): Reached EOL before first_col.\n", argv[0]);
+		fprintf(stderr, "%s: xt_split_line(): Reached EOL before first_col.\n", argv[0]);
 		fprintf(stderr, "Does your input really have %zu samples?\n",
 			first_col);
 		usage(argv);
@@ -375,7 +375,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	}
 	
 	for (; (c <= last_col) && 
-	       (delimiter = tsv_read_field_malloc(vcf_infile, &genotype,
+	       (delimiter = xt_tsv_read_field_malloc(vcf_infile, &genotype,
 				&genotype_array_size, &field_len)) != EOF;
 				++c)
 	{
@@ -405,7 +405,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	
 	if ( delimiter == EOF )
 	{
-	    dump_line(argv, "split_line(): Encountered EOF while reading genotype fields.\n",
+	    dump_line(argv, "xt_split_line(): Encountered EOF while reading genotype fields.\n",
 		      &vcf_call, line_count, c, first_col, all_sample_ids,
 		      genotype);
 	    exit(EX_DATAERR);
@@ -413,7 +413,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 
 	if ( (delimiter == '\n') && (c < last_col) )
 	{
-	    fprintf(stderr, "%s: split_line(): Reached EOL before last_col.\n", argv[0]);
+	    fprintf(stderr, "%s: xt_split_line(): Reached EOL before last_col.\n", argv[0]);
 	    fprintf(stderr, "Does your input really have %zu samples?\n", last_col);
 	    usage(argv);
 	}
@@ -421,9 +421,9 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
 	// If this wasn't the last sample in the line, skip to EOL
 	if ( delimiter != '\n' )
 	{
-	    if ( tsv_skip_rest_of_line(vcf_infile) == EOF )
+	    if ( xt_tsv_skip_rest_of_line(vcf_infile) == EOF )
 	    {
-		dump_line(argv, "split_line(): Encountered EOF skipping fields after last_col.\n",
+		dump_line(argv, "xt_split_line(): Encountered EOF skipping fields after last_col.\n",
 			  &vcf_call, line_count, c, first_col, all_sample_ids,
 			  "Genotype not relevant");
 		exit(EX_DATAERR);
@@ -433,7 +433,7 @@ int     split_line(char *argv[], FILE *vcf_infile, FILE *vcf_outfiles[],
     }
     else
     {
-	fprintf(stderr, "%s: split_line(): No more VCF calls.\n", argv[0]);
+	fprintf(stderr, "%s: xt_split_line(): No more VCF calls.\n", argv[0]);
 	fprintf(stderr, "Processed %zu multi-sample VCF calls.\n", line_count);
 	fprintf(stderr, "Max info_len = %zu.\n", max_info_len);
 	return 0;
@@ -515,7 +515,7 @@ id_list_t   *read_selected_sample_ids(char *argv[],
     fclose(fp);
     
     qsort(list->ids, list->count, sizeof(char *),
-	(int (*)(const void *, const void *))strptrcmp);
+	(int (*)(const void *, const void *))xt_strptrcmp);
     return list;
 }
 
@@ -602,7 +602,7 @@ void    tag_selected_columns(char *all_sample_ids[],
 	    selected[c - first_col] =
 		(bsearch(all_sample_ids + c - first_col, selected_sample_ids->ids,
 		    selected_sample_ids->count, sizeof(char *),
-		    (int (*)(const void *, const void *))strptrcmp)
+		    (int (*)(const void *, const void *))xt_strptrcmp)
 		    != NULL);
 	    if ( selected[c - first_col] )
 		++total_selected;
