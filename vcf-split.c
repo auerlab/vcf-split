@@ -265,7 +265,11 @@ void    write_output_files(char *argv[], FILE *vcf_infile, FILE *header,
 	     */
 	    
 	    rewind(header);
-	    fgets(file_format, 128, header);
+	    if ( fgets(file_format, 128, header) == NULL )
+	    {
+		fprintf(stderr, "%s(): fgets() failed.\n", __FUNCTION__);
+		exit(EX_DATAERR);
+	    }
 	    if ( memcmp(file_format, "##fileformat", 12) == 0 )
 		fputs(file_format, vcf_outfiles[c]);
 	    fputs("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\tFORMAT\tSAMPLE\n",
