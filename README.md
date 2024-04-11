@@ -130,7 +130,7 @@ Then, assuming you selected current packages and the default prefix
 
 ```
 source ~/Pkgsrc/pkg/etc/pkgsrc.sh   # Or pkgsrc.csh for csh or tcsh
-cd ~/Pkgsrc/biology/vcf-split
+cd ~/Pkgsrc/pkgsrc/biology/vcf-split
 sbmake install clean clean-depends
 ```
 
