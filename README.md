@@ -134,7 +134,7 @@ cd ~/Pkgsrc/pkgsrc/biology/vcf-split
 sbmake install clean clean-depends
 ```
 
-See the pkgsrc documentation for more information.
+See the [pkgsrc documentation](https://pkgsrc.org/) for more information.
 
 Community support for pkgsrc is available through the
 [pkgsrc-users](http://netbsd.org/mailinglists) mailing list.
