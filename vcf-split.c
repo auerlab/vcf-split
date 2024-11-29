@@ -55,7 +55,7 @@ int     main(int argc, char *argv[])
     
     if ( (argc == 2) && (strcmp(argv[1],"--version")) == 0 )
     {
-	printf("vcf-split %s\n", VERSION);
+	printf("%s %s\n", argv[0], VERSION);
 	return EX_OK;
     }
     
