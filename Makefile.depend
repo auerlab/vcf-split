@@ -1,5 +1,3 @@
-vcf-split.o: vcf-split.c ../local/include/xtend/dsv.h \
-  ../local/include/biolibc/vcf.h ../local/include/biolibc/sam.h \
-  ../local/include/biolibc/biolibc.h vcf-split.h vcf-split-protos.h
+vcf-split.o: vcf-split.c vcf-split.h vcf-split-protos.h
 	${CC} -c ${CFLAGS} vcf-split.c
 
