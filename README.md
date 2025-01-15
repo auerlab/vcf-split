@@ -62,7 +62,11 @@ The Makefile is designed to be friendly to package managers, such as
 [Debian packages](https://www.debian.org/distrib/packages),
 [FreeBSD ports](https://www.freebsd.org/ports/),
 [MacPorts](https://www.macports.org/), [pkgsrc](https://pkgsrc.org/), etc.
-End users should install using a package manager.  Note that pkgsrc can be used by anyone, on virtually any POSIX operating system, with or without administrator privileges..
+
+End users should install using a package manager, to ensure that
+dependencies are properly managed.
+Note that pkgsrc can be used by anyone, on virtually any POSIX operating
+system, with or without administrator privileges..
 
 I maintain a FreeBSD port and a pkgsrc package, which is sufficient to install
 cleanly on virtually any POSIX platform.  If you would like to see a
