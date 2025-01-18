@@ -65,14 +65,15 @@ The Makefile is designed to be friendly to package managers, such as
 
 End users should install using a package manager, to ensure that
 dependencies are properly managed.
-Note that pkgsrc can be used by anyone, on virtually any POSIX operating
-system, with or without administrator privileges..
 
 I maintain a FreeBSD port and a pkgsrc package, which is sufficient to install
 cleanly on virtually any POSIX platform.  If you would like to see a
 package in another package manager, please consider creating a package
 yourself.  This will be one of the easiest packages in the collection and
 hence a good vehicle to learn how to create packages.
+
+Note that pkgsrc can be used by anyone, on virtually any POSIX operating
+system, with or without administrator privileges.
 
 For an overview of available package managers, see the
 [Repology website](https://repology.org/).
