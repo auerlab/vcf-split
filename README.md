@@ -61,18 +61,18 @@ unless using a POSIX environment such as Cygwin or Windows Subsystem for Linux.
 The Makefile is designed to be friendly to package managers, such as
 [Debian packages](https://www.debian.org/distrib/packages),
 [FreeBSD ports](https://www.freebsd.org/ports/),
-[MacPorts](https://www.macports.org/), [pkgsrc](https://pkgsrc.org/), etc.
+[MacPorts](https://www.macports.org/), [dreckly](https://github.com/drecklypkg/dreckly), etc.
 
 End users should install using a package manager, to ensure that
 dependencies are properly managed.
 
-I maintain a FreeBSD port and a pkgsrc package, which is sufficient to install
+I maintain a FreeBSD port and a dreckly package, which is sufficient to install
 cleanly on virtually any POSIX platform.  If you would like to see a
 package in another package manager, please consider creating a package
 yourself.  This will be one of the easiest packages in the collection and
 hence a good vehicle to learn how to create packages.
 
-Note that pkgsrc can be used by anyone, on virtually any POSIX operating
+Note that dreckly can be used by anyone, on virtually any POSIX operating
 system, with or without administrator privileges.
 
 For an overview of available package managers, see the
@@ -111,44 +111,38 @@ cd /usr/ports/biology/vcf-split && env CFLAGS='-march=native -O2' make install
 cd /usr/ports/wip/vcf-split && make install
 ```
 
-### Installing via pkgsrc
+### Installing via dreckly
 
-pkgsrc is a cross-platform package manager that works on any Unix-like
-platform. It is native to [NetBSD](https://www.netbsd.org/) and well-supported
+[Dreckly](https://github.com/drecklypkg/dreckly) is a cross-platform package manager that works on any Unix-like
+platform. It is derived from pkgsrc, which is part of [NetBSD](https://www.netbsd.org/), and well-supported
 on [Illumos](https://illumos.org/), [MacOS](https://www.apple.com/macos/),
 [RHEL](https://www.redhat.com)/[CentOS](https://www.centos.org/), and
 many other Linux distributions.
-Using pkgsrc does not require admin privileges.  You can install a pkgsrc
+Unlike most package managers, using dreckly does not require admin privileges.  You can install a dreckly
 tree in any directory to which you have write access and easily install any
 of the nearly 20,000 packages in the collection.
 
 The
-[auto-pkgsrc-setup](https://github.com/outpaddling/auto-admin/blob/master/User-scripts/auto-pkgsrc-setup)
-script will help you install pkgsrc in about 10 minutes.  Just download it
+[auto-dreckly-setup](https://github.com/outpaddling/auto-admin/blob/master/User-scripts/auto-dreckly-setup)
+script will help you install dreckly in about 10 minutes.  Just download it
 and run
 
 ```
-sh auto-pkgsrc-setup
+sh auto-dreckly-setup
 ```
 
 Then, assuming you selected current packages and the default prefix
 
 ```
-source ~/Pkgsrc/pkg/etc/pkgsrc.sh   # Or pkgsrc.csh for csh or tcsh
-cd ~/Pkgsrc/pkgsrc/biology/vcf-split
+source ~/Dreckly/pkg/etc/dreckly.sh   # Or dreckly.csh for csh or tcsh
+cd ~/Dreckly/dreckly/biology/vcf-split
 sbmake install clean clean-depends
 ```
-
-See the [pkgsrc documentation](https://pkgsrc.org/) for more information.
-
-Community support for pkgsrc is available through the
-[pkgsrc-users](http://netbsd.org/mailinglists) mailing list.
-
 
 ## Instructions for packagers
 
 If you would like to add this project to another package manager
-rather than use FreeBSD ports or pkgsrc, basic manual build instructions
+rather than use FreeBSD ports or dreckly, basic manual build instructions
 for package can be found
 [here](https://github.com/outpaddling/Coding-Standards/blob/main/package.md).
 Your contribution is greatly appreciated!
