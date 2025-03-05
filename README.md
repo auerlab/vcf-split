@@ -15,7 +15,8 @@ options to merely decode one human chromosome BCF with
 fast server using 2 cores.  To split it into 137,977 single-sample VCFs
 would therefore require about 137,977 * 12 * 2 = ~3 million core-hours.
 This translates to 171 years on a single core or 125 days using 1000 cores
-on an HPC cluster.
+on an HPC cluster.  This is assuming the cluster filesystem can keep up,
+which is doubtful.
 
 vcf-split solves this problem by writing a large number of single-sample VCFs
 simultaneously during a single read through the multi-sample input.  The
@@ -23,7 +24,10 @@ number of parallel output files is theoretically limited only by the open file
 limit of your system, which is typically at least in the tens of thousands on
 a modern Unix-like system.  However, to prevent inadvertent system overloads,
 a limit of 10,000 samples is hard-coded as a constant.  You must edit the
-code and recompile to override this limit.
+code and recompile to override this limit.  This should only be done on
+your own hardware, to avoid impacting other users.  10,000 samples at
+a time should be more than adequate for most purposes.  The 137,977-sample
+file mentioned above can be split in 14 runs using this limit.
 
 vcf-split is written entirely in C and attempts to optimize CPU, memory,
 and disk access.  It does not inhale large amounts of data into RAM, so memory
@@ -31,9 +35,15 @@ use is trivial and it runs mostly from cache, making it very fast.
 
 The example BCF file mentioned above can be split in a few days on a single
 server using two cores, with three runs of about 45,000 samples each.
+Using the default limit of 10,000 output files did not take much
+longer, as there was less competition for disk access.  45,000 was
+determined to be near optimal by trial-and-error.
+
 Note that if running multiple vcf-split processes in parallel on a cluster
-using the same file server, you may need to reduce the number of samples.
-We found that splitting all 23 chromosomes simultaneously to the same file
+using the same file server, you may need to reduce the number of samples
+significantly.
+We found that splitting VCF files for
+23 chromosomes simultaneously to the same file
 server was limited to about 10,000 samples at once to keep CPU utilization
 reasonable.
 
