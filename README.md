@@ -37,7 +37,9 @@ The example BCF file mentioned above can be split in a few days on a single
 server using two cores, with three runs of about 45,000 samples each.
 Using the default limit of 10,000 output files did not take much
 longer, as there was less competition for disk access.  45,000 was
-determined to be near optimal by trial-and-error.
+determined to be near optimal by trial-and-error on a FreeBSD workstation
+with a small ZFS RAID-Z array.  Other hardware, operating systems and filesystems
+may differ significantly in the number of samples they can write in parallel.
 
 Note that if running multiple vcf-split processes in parallel on a cluster
 using the same file server, you may need to reduce the number of samples
@@ -45,7 +47,8 @@ significantly.
 We found that splitting VCF files for
 23 chromosomes simultaneously to the same file
 server was limited to about 10,000 samples at once to keep CPU utilization
-reasonable.
+reasonable (a drop in CPU utilization indicates that processes are waiting
+for I/O, i.e. too much competition for disk).
 
 ## Design and Implementation
 
