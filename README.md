@@ -73,7 +73,7 @@ unless using a POSIX environment such as Cygwin or Windows Subsystem for Linux.
 
 The Makefile is designed to be friendly to package managers, such as
 [Debian packages](https://www.debian.org/distrib/packages),
-[FreeBSD ports](https://www.freebsd.org/ports/),
+[FreeBSD ports](https://www.freshports.org/categories.php),
 [MacPorts](https://www.macports.org/), [dreckly](https://github.com/drecklypkg/dreckly), etc.
 
 End users should install using a package manager, to ensure that
